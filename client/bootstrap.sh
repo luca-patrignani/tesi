@@ -16,7 +16,6 @@ sudo apt-get update -y
 
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# Setup docker registry
-sudo docker rm registry
-sudo docker build /vagrant/ -t registry
-sudo docker run -d -p 5000:5000 --restart=always --name registry registry
+cp /vagrant/daemon.json /etc/docker/daemon.json
+sudo systemctl restart docker
+
