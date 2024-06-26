@@ -1,63 +1,63 @@
 #!/bin/bash
+#set -ex
+# vi: et st=2 sts=2 ts=2 sw=2 cindent bg=dark
 
-# Add Docker's official GPG key:
-sudo apt-get update -y
-sudo apt-get install -y ca-certificates curl
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
+#Harbor on Ubuntu 22.04
 
-# Add the repository to Apt sources:
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update -y
+# Unless ENV VAR 'IPorFQDN' is already set in CLI,
+# prompt for the user to ask if the install should use the IP Address or Fully Qualified Domain Name of the Harbor Server
 
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+IPorFQDN=$(ip addr show eth1 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
 
-wget https://github.com/goharbor/harbor/releases/download/v2.11.0/harbor-online-installer-v2.11.0.tgz
+# Housekeeping
+apt update -yq
+swapoff --all
+sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
+#ufw disable #Do Not Do This In Production
+echo "Housekeeping done"
 
-tar xzvf harbor-online-installer-v2.11.0.tgz
-
-openssl genrsa -out ca.key 4096
-
-openssl req -x509 -new -nodes -sha512 -days 3650 \
- -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=yourdomain.com" \
- -key ca.key \
- -out ca.crt
-
-
-openssl genrsa -out yourdomain.com.key 4096
-
-openssl req -sha512 -new \
-    -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=yourdomain.com" \
-    -key yourdomain.com.key \
-    -out yourdomain.com.csr
-
-cat > v3.ext <<-EOF
-authorityKeyIdentifier=keyid,issuer
-basicConstraints=CA:FALSE
-keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1=yourdomain.com
-DNS.2=yourdomain
-DNS.3=hostname
+#Install Latest Stable Docker Release
+apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+apt-get update -yqq
+apt-get install -y docker-ce docker-ce-cli containerd.io
+tee /etc/docker/daemon.json >/dev/null <<EOF
+{
+	"exec-opts": ["native.cgroupdriver=systemd"],
+	"insecure-registries" : ["$IPorFQDN:443","$IPorFQDN:80","0.0.0.0/0"],
+	"log-driver": "json-file",
+	"log-opts": {
+		"max-size": "100m"
+	},
+	"storage-driver": "overlay2"
+}
 EOF
+mkdir -p /etc/systemd/system/docker.service.d
+groupadd -f docker
+MAINUSER=$(logname)
+usermod -aG docker $MAINUSER
+systemctl daemon-reload
+systemctl restart docker
+echo "Docker Installation done"
 
-openssl x509 -req -sha512 -days 3650 \
-    -extfile v3.ext \
-    -CA ca.crt -CAkey ca.key -CAcreateserial \
-    -in yourdomain.com.csr \
-    -out yourdomain.com.crt
+#Install Latest Stable Docker Compose Release
+curl -skL $(curl -s https://api.github.com/repos/docker/compose/releases/latest|grep browser_download_url|grep -i "$(uname -s)-$(uname -m)"|grep -v sha25|head -1|cut -d'"' -f4) -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+echo "Docker Compose Installation done"
 
+#Install Latest Stable Harbor Release
+wget -q $(curl -s https://api.github.com/repos/goharbor/harbor/releases/latest|grep browser_download_url|grep online|cut -d'"' -f4|grep '.tgz$'|head -1) -O harbor-online-installer.tgz
+tar xvf harbor-online-installer.tgz
 
-mkdir -p /data/cert
-cp yourdomain.com.crt /data/cert/
-cp yourdomain.com.key /data/cert/
+cd harbor
+cp harbor.yml.tmpl harbor.yml
+sed -i "s/reg.mydomain.com/$IPorFQDN/g" harbor.yml
+sed -e '/port: 443$/ s/^#*/#/' -i harbor.yml
+sed -e '/https:$/ s/^#*/#/' -i harbor.yml
+sed -e '/\/your\/certificate\/path$/ s/^#*/#/' -i harbor.yml
+sed -e '/\/your\/private\/key\/path$/ s/^#*/#/' -i harbor.yml
 
-cp /vagrant/harbor.yml harbor/
-sudo harbor/prepare && harbor/install.sh
+mkdir -p /var/log/harbor
+./install.sh --with-trivy
+echo -e "Harbor Installation Complete \n\nPlease log out and log in or run the command 'newgrp docker' to use Docker without sudo\n\nLogin to your harbor instance:\n docker login -u admin -p Harbor12345 $IPorFQDN\n\n:::: ufw firewall was NOT disabled!\n"
