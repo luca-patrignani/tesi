@@ -1,0 +1,9 @@
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install coreutils 
+
+RUN apt-get install curl -y
+
+RUN echo "Acquire::http::Proxy \"http://apt-cacher:3142\";" | tee /etc/apt/apt.conf.d/01proxy
+
+CMD ["tail", "-f", "/dev/null"]

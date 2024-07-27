@@ -1,0 +1,19 @@
+services:
+  apt-cacher:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.apt_cacher
+    image: apt-cacher
+    container_name: apt-cacher
+    ports:
+      - "3142:3142"
+
+  client-1:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.client
+    image: client-1
+    container_name: client-1 
+    depends_on:
+      - apt-cacher 
+

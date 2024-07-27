@@ -1,0 +1,16 @@
+FROM ubuntu:latest
+
+RUN apt-get update -y && apt-get install -y apt-cacher-ng \
+	&& echo "PassThroughPattern: .* # this would allow CONNECT to everything" >>  /etc/apt-cacher-ng/acng.conf 
+
+RUN echo "apt-cacher-ng apt-cacher-ng/tunnelenable boolean true" | debconf-set-selections
+
+RUN /usr/sbin/apt-cacher-ng -c /etc/apt-cacher-ng 
+
+RUN apt-get install iproute2 -y 
+
+
+EXPOSE 3142
+
+CMD ["/usr/sbin/apt-cacher-ng", "-c", "/etc/apt-cacher-ng", "foreground=1"]
+
