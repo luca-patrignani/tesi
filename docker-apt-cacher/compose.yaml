@@ -17,3 +17,12 @@ services:
     depends_on:
       - apt-cacher 
 
+  client-2:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.client
+    image: client-2
+    container_name: client-2 
+    depends_on:
+      - apt-cacher 
+

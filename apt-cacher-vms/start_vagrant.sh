@@ -1,4 +1,4 @@
 #!/bin/bash
-# Fetch APT-Cacher NG IP address dynamically
-PROXY=$(vagrant ssh apt-cacher -c "hostname -I | awk '{print \$1}'")
-vagrant up
+# when vagrant is playing dumb on macosx
+sudo launchctl stop com.vagrant.vagrant-vmware-utility
+sudo launchctl start com.vagrant.vagrant-vmware-utility
