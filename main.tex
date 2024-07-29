@@ -1,0 +1,76 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[italian]{babel}
+\usepackage{newlfont}
+\textwidth=450pt\oddsidemargin=0pt
+\begin{document}
+\begin{titlepage}
+\begin{center}
+{{\Large{\textsc{Alma Mater Studiorum $\cdot$ Universit\`a di
+Bologna}}}} \rule[0.1cm]{15.8cm}{0.1mm}
+\rule[0.5cm]{15.8cm}{0.6mm}
+{\small{\bf SCUOLA DI SCIENZE\\
+Corso di Laurea in Ingegneria e Scienze Informatiche }}
+\end{center}
+\vspace{15mm}
+\begin{center}
+{\LARGE{\bf TITOLO}}\\
+\vspace{3mm}
+{\LARGE{\bf DELLA}}\\
+\vspace{3mm}
+{\LARGE{\bf TESI}}\\
+\end{center}
+\vspace{40mm}
+\par
+\noindent
+\begin{minipage}[t]{0.47\textwidth}
+{\large{\bf Relatore:\\
+Chiar.mo Prof.\\
+NOME RELATORE}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.47\textwidth}\raggedleft
+{\large{\bf Presentata da:\\
+NOME LAUREANDO}}
+\end{minipage}
+\vspace{20mm}
+\begin{center}
+{\large{\bf Sessione\\%inserire il numero della sessione in cui ci si laurea
+Anno Accademico }}%inserire l'anno accademico a cui si è iscritti
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Introduzione}
+Una organizzazione che fa uso di immagini di container Docker ha bisogno di salvare le immagini che utilizza per i seguenti motivi:
+\begin{itemize}
+    \item Salvaguardarsi dalla rimozione di alcune immagini dai registry pubblici utili all'organizzazione
+    \item Velocizzare il download delle immagini ed impegnare meno banda di rete
+    \item Non subire ad ogni pull la limitazione di banda che i registry pubblici (come Docker Hub) impongono agli utenti.
+\end{itemize}
+Questo progetto si pone come obiettivo la creazione di un sistema per il caching di immagini docker.
+
+\chapter{Soluzione}
+Per risolvere questo problema si è scelto di usare il registry open source Harbor. Harbor è un registro open source che protegge i contenuti con politiche e controllo degli accessi basati sui ruoli, assicura che le immagini siano scansionate e prive di vulnerabilità, e firma le immagini come affidabili. Harbor permette la creazione di progetti in modalità proxy cache cioè consente di utilizzare Harbor per fare da proxy e memorizzare nella cache le immagini da un registry pubblico o privato, come ad esempio Docker Hub. È possibile utilizzare un proxy cache per scaricare immagini da un registro Harbor o non-Harbor in un ambiente con accesso limitato o assente a Internet.
+\section{Come funziona Harbor in modalità cache}
+Quando arriva una richiesta di pull a un progetto di proxy cache, se l'immagine non è memorizzata nella cache Harbor recupera l'immagine dal registro di destinazione e soddisfa il comando di pull come se fosse un'immagine locale del progetto di proxy cache. Il progetto di proxy cache quindi memorizza l'immagine nella cache per future richieste.
+
+La prossima volta che un utente richiede quella immagine, Harbor controlla il manifest più recente dell'immagine nel registro target e fornisce l'immagine in base ai seguenti scenari:
+\begin{itemize}
+    \item Se l'immagine non è stata aggiornata nel registro di destinazione, l'immagine memorizzata nella cache viene servita dal progetto di proxy cache.
+    \item Se l'immagine è stata aggiornata nel registro di destinazione, la nuova immagine viene recuperata dal registro di destinazione, quindi servita e memorizzata nella cache nel progetto di proxy cache.
+    \item Se il registro di destinazione non è raggiungibile, il progetto di proxy cache serve l'immagine memorizzata nella cache.
+    \item Se l'immagine non è più presente nel registro di destinazione, nessuna immagine viene servita. 
+\end{itemize}
+
+\chapter{Installazione}
+Esistono due modalità di Installazione di Harbor: una che usa Docker Compose ed un'altra su Kubernetes. In questo progetto ci si è utilizzata la prima. Ho perciò installato Harbor su una macchina virtuale usando Vagrant. Vagrant è uno strumento open source progettato per creare e gestire ambienti di sviluppo virtualizzati. Vagrant ci permette di fare provisioning della macchina virtuale, cioè mi ha permesso di scrivere uno script che permette l'installazione automatizzata di Harbor e di tutte le sue dipendenze.
+
+\section{Domain Name System}
+Vagrant ha numerosi plugin, uno di questi è vagrant-dns, che permette la creazione di un server dns che gestisce un dominio locale. Nel Vagrantfile è possibile assegnare un nome di dominio alle macchine virtuali. Questo è fondamentale per il funzionamento di Harbor, infatti Harbor espone tutti i suoi servizi tramite un proxy Nginx il quale per funzionare correttamente deve ricevere richieste con un nome di dominio. Se si fa una GET verso Nginx con un indirizzo ip "nudo", il server risponde con un errore.
+L'aver assegnato un nome di dominio alla macchina che ospita Harbor permetterà inoltre di eseguire una installazione Harbor che farà uso di https.
+
+\section{Creare un certificato SSL firmato da una CA}
+Harbor, se installato correttamente, accetta richieste https. Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica per macchine che non hanno un indirizzo ip pubblico e sono dietro un NAT. Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi.
+
+\end{document}
