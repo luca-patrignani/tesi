@@ -1,3 +1,0 @@
-[submodule "harbor/harbor_installer"]
-	path = harbor/harbor_installer
-	url = https://github.com/ron7/harbor_installer
