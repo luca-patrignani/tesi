@@ -1,28 +1,19 @@
 #!/bin/bash
 
-## Create a temporary directory
 mkdir -p /tmp/stepbin
 
-## Change into the directory
 cd /tmp/stepbin
 
-## Download the latest Step CLI release from https://github.com/smallstep/cli/releases
 wget https://github.com/smallstep/cli/releases/download/v0.18.2/step_linux_0.18.2_amd64.tar.gz -O step-cli.tar.gz
-
-## Download the latest Step CA CLI release from https://github.com/smallstep/certificates/releases
 wget https://github.com/smallstep/certificates/releases/download/v0.18.2/step-ca_linux_0.18.2_amd64.tar.gz -O step-ca-cli.tar.gz
 
-## Extract the packages
 tar zxvf step-cli.tar.gz
 tar zxvf step-ca-cli.tar.gz
 
-## Clean up the tar packages
 rm -f *.tar.gz
 
-## Set the executable bit for the binaries
 chmod a+x step*/bin/*
 
-## Copy the binaries to somewhere in your $PATH
 cp step*/bin/* /usr/local/bin/
 
 mkdir -p /root/.step
@@ -54,10 +45,8 @@ RestartSec=30
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd
 systemctl daemon-reload
 
-# Run the CA Server
 systemctl enable --now step-ca-server
 
 step ca provisioner add acme --type ACME --claims '{"maxTLSCertDuration": "4320h", "defaultTLSCertDuration": "744h"}'
