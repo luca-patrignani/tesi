@@ -13,11 +13,13 @@ Corso di Laurea in Ingegneria e Scienze Informatiche }}
 \end{center}
 \vspace{15mm}
 \begin{center}
-{\LARGE{\bf TITOLO}}\\
+{\LARGE{\bf PROGETTO}}\\
 \vspace{3mm}
-{\LARGE{\bf DELLA}}\\
+{\LARGE{\bf VIRTUALIZZAZIONE}}\\
 \vspace{3mm}
-{\LARGE{\bf TESI}}\\
+{\LARGE{\bf DI}}\\
+\vspace{3mm}
+{\LARGE{\bf SISTEMI}}\\
 \end{center}
 \vspace{40mm}
 \par
@@ -25,17 +27,17 @@ Corso di Laurea in Ingegneria e Scienze Informatiche }}
 \begin{minipage}[t]{0.47\textwidth}
 {\large{\bf Relatore:\\
 Chiar.mo Prof.\\
-NOME RELATORE}}
+Vittorio Ghini}}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.47\textwidth}\raggedleft
 {\large{\bf Presentata da:\\
-NOME LAUREANDO}}
+Luca Patrignani}}
 \end{minipage}
 \vspace{20mm}
 \begin{center}
 {\large{\bf Sessione\\%inserire il numero della sessione in cui ci si laurea
-Anno Accademico }}%inserire l'anno accademico a cui si è iscritti
+2024-2025}}%inserire l'anno accademico a cui si è iscritti
 \end{center}
 \end{titlepage}
 
@@ -63,14 +65,50 @@ La prossima volta che un utente richiede quella immagine, Harbor controlla il ma
     \item Se l'immagine non è più presente nel registro di destinazione, nessuna immagine viene servita. 
 \end{itemize}
 
+\chapter{Sicurezza}
+\section{Creare un certificato SSL/TLS firmato da una CA}
+Harbor, se installato correttamente, accetta richieste https. Ha bisogno però di un certificato digitale emesso da una Certificate Authority tramite il protocollo ACME. 
+\subsection{Protocollo ACME}
+Il protocollo ACME (Automatic Certificate Management Environment) è uno standard sviluppato per automatizzare l'emissione e la gestione dei certificati digitali, in particolare i certificati SSL/TLS, che sono utilizzati per la crittografia delle comunicazioni su Internet.
+Questo è il suo funzionamento di base:
+\begin{itemize}
+    \item Registrazione: Il client si registra con il server CA, creando un account e ottenendo una coppia di chiavi pubblica/privata.
+    \item Richiesta di una sfida: Il client richiede una sfida (challenge) per dimostrare il controllo del dominio. Il protocollo contempla 4 tipi di sfide:
+    \begin{itemize}
+        \item HTTP-01 challenge: La CA ACME richiede al client di ospitare un numero casuale in un URL casuale in \texttt{/.well-known/acme-challenge} sulla porta 80. La CA verifica il controllo del client sul quel dominio e su quella porta riservata emettendo una richiesta HTTP GET a quell'URL.
+        \item DNS-01 challenge: La CA ACME richiede al client di configurare un record DNS TXT casuale per il dominio in questione. La verifica della sfida avviene tramite una query DNS per quel record TXT.
+        \item TLS-ALPN-01 challenge: La CA ACME utilizza TLS per validare una sfida, sfruttando la negoziazione del protocollo a livello di applicazione (ALPN) nella stretta di mano TLS. Il client presenta un certificato TLS auto-firmato che contiene la risposta alla sfida come un'estensione speciale del certificato X.509.
+        \item DEVICE-ATTEST-01 challenge: progettata per emettere certificati client legati a un identificatore del dispositivo. Permette ai client con un modulo di sicurezza integrato (TPM, Secure Enclave, Yubikey, ecc.) di richiedere un certificato legato all'identificatore hardware permanente del modulo di sicurezza. Può anche essere utilizzata per attestare la protezione hardware di una chiave privata nel modulo di sicurezza.
+    \end{itemize}
+    \item Risposta alla sfida.
+    \item Verifica: La CA verifica che la sfida sia stata completata con successo.
+    \item Emissione del certificato: Se la verifica ha esito positivo, la CA emette il certificato, che il client può scaricare e installare.
+    \item Rinnovo: ACME automatizza anche il processo di rinnovo del certificato, eseguendo nuovamente le sfide di controllo del dominio prima della scadenza del certificato.
+\end{itemize}
+Non possiamo però superare nessuna di queste sfide: 
+\begin{itemize}
+    \item HTTP-01: poiché la nostra rete a cui siamo collegati è dietro NAT non abbiamo il controllo sulla porta 80.
+    \item DNS-01: non possediamo ne un ip pubblico ne un dominio pubblico per creare un record DNS.
+    \item gli altri due tipi di sfide non sono utili nel nostro caso.
+\end{itemize}
+Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica.
+Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi. Una implementazione open source di una CA è step-ca, sviluppata da Smallstep.
+
+\section{Autenticazione degli utenti}
+Harbor permette di integrare servizi di identity provider e usare quegli utenti e gruppi all'interno dei propri progetti. Quindi i dipendenti potranno usare le proprie credenziali aziendali per accedere alla dashboard di Harbor e fare login tramite il comando \texttt{docker login} alle repository a cui hanno il diritto di accedere.
+Questo livello di sicurezza può risultare ridondante se Harbor è installato all'interno di una rete privata dove l'accesso alla rete stessa dovrebbe garantire un adeguato livello di sicurezza ma di garantire o revocare certi diritti a certi utenti. Per quanto riguarda invece una installazione accessibile da internet (cioè raggiungibile anche da fuori della rete aziendale senza passare per una VPN o altri sistemi di tunnelling) allora diventa di vitale importanza questo livello di autenticazione.
+
 \chapter{Installazione}
+\section{Installazione Harbor}
 Esistono due modalità di Installazione di Harbor: una che usa Docker Compose ed un'altra su Kubernetes. In questo progetto ci si è utilizzata la prima. Ho perciò installato Harbor su una macchina virtuale usando Vagrant. Vagrant è uno strumento open source progettato per creare e gestire ambienti di sviluppo virtualizzati. Vagrant ci permette di fare provisioning della macchina virtuale, cioè mi ha permesso di scrivere uno script che permette l'installazione automatizzata di Harbor e di tutte le sue dipendenze.
 
 \section{Domain Name System}
 Vagrant ha numerosi plugin, uno di questi è vagrant-dns, che permette la creazione di un server dns che gestisce un dominio locale. Nel Vagrantfile è possibile assegnare un nome di dominio alle macchine virtuali. Questo è fondamentale per il funzionamento di Harbor, infatti Harbor espone tutti i suoi servizi tramite un proxy Nginx il quale per funzionare correttamente deve ricevere richieste con un nome di dominio. Se si fa una GET verso Nginx con un indirizzo ip "nudo", il server risponde con un errore.
 L'aver assegnato un nome di dominio alla macchina che ospita Harbor permetterà inoltre di eseguire una installazione Harbor che farà uso di https.
 
-\section{Creare un certificato SSL firmato da una CA}
-Harbor, se installato correttamente, accetta richieste https. Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica per macchine che non hanno un indirizzo ip pubblico e sono dietro un NAT. Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi.
+\section{Installazione step-ca}
+L'installazione di step-ca è abbastanza lineare, l'unica cosa degna di nota è il far eseguire step-ca come un servizio systemD. La CA durante l'inizializzazione richiede tra i vari campi anche l'indirizzo ip e il nome dns della macchina ospitante.
 
-\end{document}
+\chapter{Conclusioni}
+Ho creato una infrastruttura composta da due macchine virtuali all'interno dello stesso dominio DNS, una all'indirizzo \texttt{harbor.domain} e un'altra \texttt{ca.domain}. La prima ospita una installazione di Harbor su Docker Compose, mentre l'altra contiene una installazione di step-ca, una implementazione minimale di una certificate authority. 
+\end{document}.
