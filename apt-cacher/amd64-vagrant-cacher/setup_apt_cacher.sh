@@ -7,11 +7,6 @@ echo "apt-cacher-ng apt-cacher-ng/tunnelenable boolean true" | sudo debconf-set-
 
 sudo apt-get install -y apt-cacher-ng && sudo echo "PassThroughPattern: .* # this would allow CONNECT to everything" >>  /etc/apt-cacher-ng/acng.conf
 
-# Save the IP address to a file for sharing
-IP_ADDRESS=$(hostname)
-echo "PROXY=${IP_ADDRESS}" > /vagrant/config/vagrant_config.env
-
-
 sudo systemctl enable apt-cacher-ng
 sudo systemctl start apt-cacher-ng
 
