@@ -60,5 +60,24 @@ sed -i "s/reg.mydomain.com/$IPorFQDN/g" harbor.yml
 
 mkdir -p /var/log/harbor
 ./install.sh --with-trivy
+# cp /vagrant/root_ca.crt /home/vagrant/harbor/common/config/shared/trust-certificates
 echo -e "Harbor Installation Complete \n\nPlease log out and log in or run the command 'newgrp docker' to use Docker without sudo\n\nLogin to your harbor instance:\n docker login -u admin -p Harbor12345 $IPorFQDN\n\n:::: ufw firewall was NOT disabled!\n"
 
+exit_code=0
+while [[ exit_code -ne 200 ]]; do 
+	exit_code=$( curl -X PUT -s -o /vagrant/set_ldap_harbor.out -w "%{http_code}" -u "admin:Harbor12345" -H "Content-Type: application/json" \
+		-ki https://harbor.domain/api/v2.0/configurations \
+		-d '{
+		"auth_mode": "ldap_auth",
+		"ldap_url": "ldap://ldap.domain:3890",
+		"ldap_base_dn": "ou=people,dc=ldap.domain",
+		"ldap_search_dn": "uid=admin,ou=people,dc=ldap.domain",
+		"ldap_search_password": "password",
+		"ldap_group_base_dn": "ou=groups,dc=ldap.domain",
+		"ldap_group_admin_dn": "cn=group,ou=groups,dc=ldap.domain",
+		"ldap_group_search_filter": "(objectClass=groupOfUniqueNames)",
+		"ldap_group_attribute_name": "uid",
+		"ldap_uid": "uid"
+		}' )
+	sleep 2
+done

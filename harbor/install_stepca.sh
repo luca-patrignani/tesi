@@ -1,5 +1,8 @@
 #!/bin/bash
 
+apt update
+apt install jq -y
+
 mkdir -p /tmp/stepbin
 
 cd /tmp/stepbin
@@ -52,8 +55,6 @@ systemctl enable --now step-ca-server
 step ca provisioner add acme --type ACME --claims '{"maxTLSCertDuration": "4320h", "defaultTLSCertDuration": "744h"}'
 step ca provisioner add x5c-smallstep --type X5C --x5c-root /root/.step/certs/root_ca.crt
 cp /root/.step/config/ca.json /root/.step/config/ca.json.bak
-apt update
-apt install jq
 
 jq '.authority.provisioners[[.authority.provisioners[] | .type=="JWK"] | index(true)].claims |= (. + {"maxTLSCertDuration":"8760h","defaultTLSCertDuration":"744h"})' /root/.step/config/ca.json.bak > /root/.step/config/ca.json
 systemctl restart step-ca-server
