@@ -1,6 +1,12 @@
 \documentclass[12pt,a4paper]{report}
 \usepackage[italian]{babel}
 \usepackage{newlfont}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily,
+  showstringspaces=false,
+  breaklines=true,
+}
+
 \textwidth=450pt\oddsidemargin=0pt
 \begin{document}
 \begin{titlepage}
@@ -94,20 +100,113 @@ Non possiamo però superare nessuna di queste sfide:
 Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica.
 Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi. Una implementazione open source di una CA è step-ca, sviluppata da Smallstep.
 
-\section{Autenticazione degli utenti}
-Harbor permette di integrare servizi di identity provider e usare quegli utenti e gruppi all'interno dei propri progetti. Quindi i dipendenti potranno usare le proprie credenziali aziendali per accedere alla dashboard di Harbor e fare login tramite il comando \texttt{docker login} alle repository a cui hanno il diritto di accedere.
+\chapter{Autenticazione degli utenti}
+Harbor permette di integrare servizi di identity provider e usare quegli utenti e gruppi all'interno dei propri progetti. Quindi i dipendenti potranno usare le proprie credenziali aziendali per accedere alla dashboard di Harbor e fare login tramite il comando \texttt{docker login} alle repository a cui hanno il diritto di accedere. Harbor supporta quattro modalità di autenticazione:
+\begin{itemize}
+    \item Autenticazione tramite database: gli account utente sono creati e gestiti direttamente in Harbor. Gli account utente sono archiviati nel database di Harbor.
+    \item Autenticazione tramite LDAP/Active Directory: Harbor è connesso a un server LDAP/Active Directory esterno. Gli account utente vengono creati e gestiti dal provider LDAP/AD.
+    \item Autenticazione tramite Provider OIDC: Harbor è connesso a un provider OIDC esterno. Gli account utente vengono creati e gestiti dal provider OIDC.
+\end{itemize}
 Questo livello di sicurezza può risultare ridondante se Harbor è installato all'interno di una rete privata dove l'accesso alla rete stessa dovrebbe garantire un adeguato livello di sicurezza ma di garantire o revocare certi diritti a certi utenti. Per quanto riguarda invece una installazione accessibile da internet (cioè raggiungibile anche da fuori della rete aziendale senza passare per una VPN o altri sistemi di tunnelling) allora diventa di vitale importanza questo livello di autenticazione.
+Dato che il caso studio riguarda una azienda è molto probabile che questa abbia già un proprio servizio di active directory che supporti nativamente LDAP, perciò si è deciso di utilizzare questo protocollo.
+
+\section{LDAP}
+LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-source e multipiattaforma utilizzato per accedere e gestire directory di informazioni. Una directory in questo contesto è un archivio che contiene dati strutturati gerarchicamente, come una rubrica di contatti o informazioni su utenti, computer e altre risorse di rete.
+\subsection{Caratteristiche principali di LDAP}
+\begin{itemize}
+    \item \textbf{Gestione centralizzata}: LDAP viene utilizzato principalmente per la gestione centralizzata degli utenti e delle risorse. Questo significa che tutte le informazioni sugli utenti (come nomi utente, password, indirizzi email) e le risorse di rete (come stampanti, server) possono essere gestite da un unico punto.
+    \item \textbf{Autenticazione e autorizzazione}: LDAP è comunemente utilizzato per autenticare utenti e fornire accesso alle risorse in una rete. Ad esempio, molti sistemi operativi, applicazioni e servizi utilizzano LDAP per verificare le credenziali degli utenti.
+    \item \textbf{Interoperabilità}: Essendo un protocollo standard, LDAP è supportato da molti sistemi e applicazioni, rendendolo una scelta popolare per ambienti eterogenei con diverse piattaforme e sistemi operativi.
+    \item \textbf{Leggero}: Come suggerisce il nome, LDAP è progettato per essere "leggero" in termini di risorse di rete e di calcolo richieste, rispetto ai protocolli più vecchi e più complessi.
+    \item \textbf{Distribuzione e replica}: LDAP supporta la distribuzione dei dati e la replica, permettendo di avere copie dei dati della directory in diverse posizioni, migliorando così la disponibilità e la tolleranza ai guasti.
+\end{itemize}
+Esiste una versione sicura di LDAP: LDAPS. LDAPS utilizza TLS (Transport Layer Security) o SSL (Secure Sockets Layer) per cifrare la comunicazione tra client e server LDAP, garantendo così che i dati scambiati non possano essere intercettati o modificati da terzi.
+\subsection{Distinguished Name}
+Un concetto fondamentale nel protocollo LDAP è quello di \textit{Distinguished Name}. Il DN identifica in modo univoco ogni voce in una directory LDAP.
+Il DN è formato da una serie di attributi, ciascuno con un valore, che rappresentano i diversi livelli della struttura della directory. La struttura tipica di un DN può includere (in ordine dal più specifico al più generale):
+\begin{itemize}
+    \item \textbf{CN (Common Name)}: Nome comune dell'oggetto.
+    \item \textbf{OU (Organizational Unit)}: Unità organizzativa.
+    \item \textbf{O (Organization)}: Organizzazione.
+    \item \textbf{DC (Domain Component)}: Componente di dominio.
+    \item \textbf{L (Locality)}: Località.
+    \item \textbf{ST (State or Province)}: Stato o provincia.
+    \item \textbf{C (Country)}: Paese.
+\end{itemize}
+\subsubsection{Esempi di DN}
+\begin{itemize}
+    \item DN di un Utente: \texttt{CN=John Doe,OU=Users,DC=example,DC=com}. Questo DN rappresenta un utente di nome John Doe che è membro dell'unità organizzativa "Users" sotto il dominio "example.com".
+    \item DN di un Gruppo: \texttt{CN=Developers,OU=Groups,DC=example,DC=com}. Questo DN rappresenta un gruppo chiamato "Developers" che si trova nell'unità organizzativa "Groups" sotto il dominio "example.com".
+\end{itemize}
+\subsubsection{Uso del DN}
+\begin{itemize}
+    \item Ricerca: Il DN viene utilizzato per localizzare una voce specifica nella directory.
+    \item Autenticazione: Il DN può essere usato come parte delle credenziali per autenticare un utente.
+    \item Modifica: Le operazioni di modifica su una voce richiedono di specificare il suo DN.
+\end{itemize}
 
 \chapter{Installazione}
 \section{Installazione Harbor}
 Esistono due modalità di Installazione di Harbor: una che usa Docker Compose ed un'altra su Kubernetes. In questo progetto ci si è utilizzata la prima. Ho perciò installato Harbor su una macchina virtuale usando Vagrant. Vagrant è uno strumento open source progettato per creare e gestire ambienti di sviluppo virtualizzati. Vagrant ci permette di fare provisioning della macchina virtuale, cioè mi ha permesso di scrivere uno script che permette l'installazione automatizzata di Harbor e di tutte le sue dipendenze.
-
+\subsection{Integrazione con la CA}
+Poiché è richiesto che Harbor utilizzi https, abbiamo prima bisogno di ottenere un certificato da una CA. È stato perciò usato Certbot, uno utility a riga di comando che permette di ottenere certificati SSL/TLS. Certbot per ottenere tale certificato ha bisogno dei seguenti parametri:
+\begin{itemize}
+    \item il dominio DNS per cui si richiede il certificato
+    \item il server che ospita la CA
+    \item un indirizzo email
+    \item una flag con cui si dichiara di accettare le condizioni del servizio
+\end{itemize}
+Inoltre dato che in questo caso è si fa uso di una CA locale e non certificata da una CA fidata bisogna passare a Certbot una variabile di ambiente che contiene il percorso del file che contiene il \texttt{root.ca}, cioè il certificato della nostra CA e che Certbot deve accettare come certificate authority affidabile.
+\subsection{Integrazione con il server LDAP}
+Per configurare la modalità di autenticazione di Harbor è stata utilizzata la vastissima RESTful API messa a disposizione. 
+Facendo una chiamata PUT all'endpoint \texttt{/api/v2.0/configurations} è possibile configurare Harbor in ogni suo aspetto. La richiesta ha questo aspetto:
+\begin{lstlisting}[language=bash]
+curl -X PUT -u "<username>:<password>" 
+-H "Content-Type: application/json" 
+-ki https://<harbor-domain>/api/v2.0/configurations 
+-d'{
+    "auth_mode": "ldap_auth",
+    "ldap_url": "ldap://<ldap-domain>:<ldap-port>",
+    "ldap_base_dn": "ou=people,dc=<ldap-domain>",
+    "ldap_search_dn": "uid=admin,ou=people,dc=<ldap-domain>",
+    "ldap_search_password": "<password>",
+    "ldap_group_base_dn": "ou=groups,dc=<ldap-domain>",
+    "ldap_group_admin_dn": "cn=<harbor-admin-group>,ou=groups,dc=<ldap-domain>",
+    "ldap_group_search_filter": "(objectClass=groupOfUniqueNames)",
+    "ldap_group_attribute_name": "uid",
+    "ldap_uid": "uid"
+}'
+\end{lstlisting}
+Ecco la spiegazione dei campi più importanti:
+\begin{itemize}
+    \item \texttt{auth\_mode}: modalità di autenticazione
+    \item \texttt{ldap\_url}: l'url del server ldap da utilizzare
+    \item \texttt{ldap\_base\_dn}: il Distinguished Name che identifica tutti gli utenti da considerare
+    \item \texttt{ldap\_search\_dn}: il DN di un utente che ha diritto di lettura nel server LDAP (il cosiddetto utente bind)
+    \item \texttt{ldap\_search\_password}: la password dell'utente bind
+    \item \texttt{ldap\_group\_base\_dn}: il gruppo contenente gli utenti che potranno accedere ad Harbor
+    \item \texttt{ldap\_group\_admin\_dn}: il gruppo contenente gli utenti che saranno amministratori dell'istanza Harbor
+    \item \texttt{ldap\_uid}: l'attributo che gli utenti dovranno inserire come nome utente quando accederanno ad Harbor
+\end{itemize}
 \section{Domain Name System}
 Vagrant ha numerosi plugin, uno di questi è vagrant-dns, che permette la creazione di un server dns che gestisce un dominio locale. Nel Vagrantfile è possibile assegnare un nome di dominio alle macchine virtuali. Questo è fondamentale per il funzionamento di Harbor, infatti Harbor espone tutti i suoi servizi tramite un proxy Nginx il quale per funzionare correttamente deve ricevere richieste con un nome di dominio. Se si fa una GET verso Nginx con un indirizzo ip "nudo", il server risponde con un errore.
 L'aver assegnato un nome di dominio alla macchina che ospita Harbor permetterà inoltre di eseguire una installazione Harbor che farà uso di https.
 
 \section{Installazione step-ca}
-L'installazione di step-ca è abbastanza lineare, l'unica cosa degna di nota è il far eseguire step-ca come un servizio systemD. La CA durante l'inizializzazione richiede tra i vari campi anche l'indirizzo ip e il nome dns della macchina ospitante.
+L'installazione di step-ca è abbastanza lineare, l'unica cosa degna di nota è il far eseguire step-ca come un servizio systemD. La CA durante l'inizializzazione richiede tra i vari campi anche l'indirizzo ip e il nome dns della macchina ospitante. Al termine dell'installazione sarà disponibile il \textit{root certificate}, cioè un certificato "self-signed" dalla stessa CA che la identifica. Il certificato root è solitamente reso affidabile tramite un meccanismo diverso da un certificato, come la distribuzione fisica sicura. Ad esempio, alcuni dei certificati root più conosciuti sono distribuiti nei sistemi operativi dai loro produttori.
+Nel nostro caso questo certificato è reso disponibile alle altre macchine virtuali della nostra architettura tramite un volume condiviso.
+
+\section{Installazione LLDAP}
+LLDAP è un server di autenticazione leggero che implementa un'interfaccia LDAP semplificata. Questo server è un sistema di gestione utenti che è:
+\begin{itemize}
+    \item semplice da configurare (senza complicazioni con \texttt{slapd}),
+    \item semplice da gestire (interfaccia web user-friendly),
+    \item a basso consumo di risorse,
+    \item basato su principi consolidati con impostazioni di base predefinite, così non devi comprendere le sottigliezze di LDAP.
+\end{itemize}
+Per il nostro esperimento si è valutato di non scegliere OpenLDAP poiché è molto laboriosa la sua installazione e nel caso reale il servizio LDAP è già presente all'interno della azienda.
+La sua installazione è molto semplice perché esiste l'immagine Docker ufficiale \texttt{lldap/lldap} e tramite delle variabili d'ambiente è possibile configurare il server.
+Esiste inoltre un progetto esterno che permette il deployment di LLDAP su un cluster Kubernetes. 
 
 \chapter{Conclusioni}
 Ho creato una infrastruttura composta da due macchine virtuali all'interno dello stesso dominio DNS, una all'indirizzo \texttt{harbor.domain} e un'altra \texttt{ca.domain}. La prima ospita una installazione di Harbor su Docker Compose, mentre l'altra contiene una installazione di step-ca, una implementazione minimale di una certificate authority. 
