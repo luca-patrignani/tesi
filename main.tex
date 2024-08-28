@@ -3,9 +3,11 @@
 \usepackage{newlfont}
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily,
-  showstringspaces=false,
-  breaklines=true,
+showstringspaces=false,
+breaklines=true,
 }
+\usepackage{graphicx}
+\usepackage{hyperref}
 
 \textwidth=450pt\oddsidemargin=0pt
 \begin{document}
@@ -112,7 +114,7 @@ Dato che il caso studio riguarda una azienda è molto probabile che questa abbia
 
 \section{LDAP}
 LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-source e multipiattaforma utilizzato per accedere e gestire directory di informazioni. Una directory in questo contesto è un archivio che contiene dati strutturati gerarchicamente, come una rubrica di contatti o informazioni su utenti, computer e altre risorse di rete.
-\subsection{Caratteristiche principali di LDAP}
+\section{Caratteristiche principali di LDAP}
 \begin{itemize}
     \item \textbf{Gestione centralizzata}: LDAP viene utilizzato principalmente per la gestione centralizzata degli utenti e delle risorse. Questo significa che tutte le informazioni sugli utenti (come nomi utente, password, indirizzi email) e le risorse di rete (come stampanti, server) possono essere gestite da un unico punto.
     \item \textbf{Autenticazione e autorizzazione}: LDAP è comunemente utilizzato per autenticare utenti e fornire accesso alle risorse in una rete. Ad esempio, molti sistemi operativi, applicazioni e servizi utilizzano LDAP per verificare le credenziali degli utenti.
@@ -121,7 +123,7 @@ LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-s
     \item \textbf{Distribuzione e replica}: LDAP supporta la distribuzione dei dati e la replica, permettendo di avere copie dei dati della directory in diverse posizioni, migliorando così la disponibilità e la tolleranza ai guasti.
 \end{itemize}
 Esiste una versione sicura di LDAP: LDAPS. LDAPS utilizza TLS (Transport Layer Security) o SSL (Secure Sockets Layer) per cifrare la comunicazione tra client e server LDAP, garantendo così che i dati scambiati non possano essere intercettati o modificati da terzi.
-\subsection{Distinguished Name}
+\section{Distinguished Name}
 Un concetto fondamentale nel protocollo LDAP è quello di \textit{Distinguished Name}. Il DN identifica in modo univoco ogni voce in una directory LDAP.
 Il DN è formato da una serie di attributi, ciascuno con un valore, che rappresentano i diversi livelli della struttura della directory. La struttura tipica di un DN può includere (in ordine dal più specifico al più generale):
 \begin{itemize}
@@ -133,22 +135,138 @@ Il DN è formato da una serie di attributi, ciascuno con un valore, che rapprese
     \item \textbf{ST (State or Province)}: Stato o provincia.
     \item \textbf{C (Country)}: Paese.
 \end{itemize}
-\subsubsection{Esempi di DN}
+\subsection{Esempi di DN}
 \begin{itemize}
     \item DN di un Utente: \texttt{CN=John Doe,OU=Users,DC=example,DC=com}. Questo DN rappresenta un utente di nome John Doe che è membro dell'unità organizzativa "Users" sotto il dominio "example.com".
     \item DN di un Gruppo: \texttt{CN=Developers,OU=Groups,DC=example,DC=com}. Questo DN rappresenta un gruppo chiamato "Developers" che si trova nell'unità organizzativa "Groups" sotto il dominio "example.com".
 \end{itemize}
-\subsubsection{Uso del DN}
+\subsection{Uso del DN}
 \begin{itemize}
     \item Ricerca: Il DN viene utilizzato per localizzare una voce specifica nella directory.
     \item Autenticazione: Il DN può essere usato come parte delle credenziali per autenticare un utente.
     \item Modifica: Le operazioni di modifica su una voce richiedono di specificare il suo DN.
 \end{itemize}
 
-\chapter{Installazione}
-\section{Installazione Harbor}
+\chapter{Installazione Harbor}
 Esistono due modalità di Installazione di Harbor: una che usa Docker Compose ed un'altra su Kubernetes. In questo progetto ci si è utilizzata la prima. Ho perciò installato Harbor su una macchina virtuale usando Vagrant. Vagrant è uno strumento open source progettato per creare e gestire ambienti di sviluppo virtualizzati. Vagrant ci permette di fare provisioning della macchina virtuale, cioè mi ha permesso di scrivere uno script che permette l'installazione automatizzata di Harbor e di tutte le sue dipendenze.
-\subsection{Integrazione con la CA}
+\section{Architettura interna di Harbor}
+Dalla versione 2.0, Harbor è evoluto diventando un registro di artefatti cloud-native completamente conforme all'OCI.
+
+Un registro di artefatti cloud-native conforme all'OCI significa che ora supporta immagini OCI e indici di immagini OCI (https://github.com/opencontainers/image-spec/blob/master/image-index.md). Un indice di immagini OCI è un manifesto di livello superiore che punta a una lista di manifesti di immagini, ideale per una o più piattaforme. Ad esempio, la lista dei manifesti Docker è un'implementazione popolare dell'indice di immagini OCI. Questo significa anche che Harbor ora supporta pienamente immagini multi-architettura.
+
+Con Harbor V2.0, gli utenti possono gestire immagini, liste di manifesti, Helm charts, CNABs, OPAs, tra gli altri, che aderiscono tutti alle specifiche dell'immagine OCI. Permette inoltre di effettuare operazioni di pull, push, cancellazione, tagging, replicazione e scansione su questo tipo di artefatti. Ora è anche possibile firmare immagini e liste di manifesti.
+
+Il diagramma mostrato di seguito rappresenta l'architettura generale del registro Harbor.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{images/architecture.png}
+\caption{Architettura di Harbor versione 2.0.}
+\end{figure}
+
+Come rappresentato nel diagramma sopra, Harbor è composto dai seguenti componenti distribuiti su 3 livelli:
+
+\subsection{Livello di Accesso ai Dati}
+
+\textbf{k-v storage}: formato da Redis, fornisce funzioni di cache dei dati e supporta la persistenza temporanea dei metadati dei lavori per il servizio di job.
+
+\textbf{data storage}: diversi tipi di storage sono supportati per la persistenza dei dati come storage di backend del registro e del museo delle chart. Per ulteriori dettagli, fare riferimento al documento della lista dei driver sul sito web di Docker (\url{https://docs.docker.com/registry/storage-drivers/}) e al repository GitHub di ChartMuseum (\url{https://github.com/chartmuseum/storage}).
+
+\textbf{Database}: memorizza i metadati correlati dei modelli di Harbor, come progetti, utenti, ruoli, politiche di replicazione, politiche di conservazione dei tag, scanner, chart e immagini.
+
+\subsection{Servizi principali}
+
+\textbf{Proxy}: reverse-proxy formato dal server Nginx per fornire funzionalità di routing delle API. I componenti di Harbor, come il core, il registro, il portale web e i servizi token, ecc., sono tutti dietro questo proxy inverso. Il proxy inoltra le richieste dai browser e dai client Docker ai vari servizi di backend.
+
+\textbf{Core}: servizio principale di Harbor, che fornisce principalmente le seguenti funzioni:
+
+\begin{itemize}
+  \item \textbf{API Server}: un server HTTP che accetta richieste API REST e risponde a queste richieste basandosi sui suoi sottomoduli come 'Autenticazione e Autorizzazione', 'Middleware' e 'Gestori API'.
+  \begin{itemize}
+    \item \textbf{Autenticazione e Autorizzazione}:
+    \begin{itemize}
+      \item Le richieste sono protette dal servizio di autenticazione, che può essere gestito da un database locale, AD/LDAP o OIDC.
+      \item Il meccanismo RBAC è abilitato per eseguire autorizzazioni sulle azioni correlate, ad esempio: pull/push di un'immagine.
+      \item Il servizio token è progettato per emettere un token per ogni comando di push/pull di Docker in base al ruolo dell'utente in un progetto. Se non c'è un token in una richiesta inviata da un client Docker, il Registro reindirizzerà la richiesta al servizio token.
+    \end{itemize}
+    \item \textbf{Gestori API}: gestiscono le richieste REST API corrispondenti, concentrandosi principalmente sull'analisi e la convalida dei parametri della richiesta, completando la logica aziendale sulla base del controller API pertinente e scrivendo la risposta generata.
+  \end{itemize}
+  \item \textbf{Config Manager}: copre la gestione di tutte le configurazioni del sistema, come le impostazioni del tipo di autenticazione, le impostazioni email e i certificati, ecc.
+  \item \textbf{Gestione dei Progetti}: gestisce i dati di base e i metadati corrispondenti del progetto, che è stato creato per isolare gli artefatti gestiti.
+  \item \textbf{Quota Manager}: gestisce le impostazioni delle quote dei progetti ed esegue le convalide delle quote quando avvengono nuovi push.
+  \item \textbf{Chart Controller}: fa da proxy per le richieste relative alle chart al backend `chartmuseum` e fornisce diverse estensioni per migliorare l'esperienza di gestione delle chart.
+  \item \textbf{Retention Manager}: gestisce le politiche di conservazione dei tag, eseguendo e monitorando i processi di conservazione dei tag.
+  \item \textbf{Content Trust}: aggiunge estensioni alla capacità di fiducia fornita dal backend Notary per supportare il processo di fiducia dei contenuti in modo fluido. Al momento, solo le immagini dei container sono supportate per la firma.
+  \item \textbf{Replication Controller}: gestisce le politiche di replicazione e gli adattatori del registro, innesca e monitora i processi di replicazione concorrenti. Molti adattatori del registro sono implementati:
+  \begin{itemize}
+    \item Distribution (docker registry)
+    \item Docker Hub
+    \item Huawei SWR
+    \item Amazon ECR
+    \item Google GCR
+    \item Azure ACR
+    \item Ali ACR
+    \item Helm Hub
+    \item Quay
+    \item Artifactory
+    \item GitLab Registry
+  \end{itemize}
+  \item \textbf{Scan Manager}: gestisce i vari scanner configurati adattati da diversi fornitori e fornisce anche sommari di scansione e report per gli artefatti specificati.
+  \item \textbf{Notification Manager (webhook)}: un meccanismo configurato in Harbor in modo che le modifiche di stato degli artefatti in Harbor possano essere popolate agli endpoint Webhook configurati in Harbor. Le parti interessate possono innescare alcune azioni di follow-up ascoltando gli eventi webhook correlati. Attualmente, sono supportati due modi:
+  \begin{itemize}
+    \item Richiesta HTTP Post
+    \item Canale Slack
+  \end{itemize}
+  \item \textbf{OCI Artifact Manager}: componente core per gestire il ciclo di vita di tutti gli artefatti OCI in tutto il registro Harbor. Fornisce le operazioni CRUD per gestire i metadati e le aggiunte correlate come il report di scansione, la cronologia di costruzione delle immagini del container e il readme, le dipendenze e il valore.yaml delle chart helm, ecc., dell'artefatto, supporta anche le capacità di gestione dei tag degli artefatti e altre operazioni utili.
+  \item \textbf{Registry Driver}: implementato come SDK del client del registro per fare comunicazioni con il registro sottostante (distribuzione Docker al momento). 'OCI Artifact Manager' si basa su questo driver per ottenere informazioni aggiuntive dal manifesto e persino dalla configurazione JSON dell'artefatto specificato che si trova nel registro sottostante.
+\end{itemize}
+
+\textbf{Servizio di Lavoro}: servizio di coda di esecuzione di lavori generali per permettere ad altri componenti/servizi di inviare richieste per eseguire compiti asincroni in parallelo tramite semplici API REST.
+
+\textbf{Collettore di Log}: raccoglitore di log, responsabile della raccolta dei log degli altri moduli in un unico luogo.
+
+\textbf{Controller di GC}: gestisce le impostazioni del programma GC online e avvia e traccia il progresso del GC.
+
+\textbf{Chart Museum}: un server repository di chart di terze parti che fornisce API di gestione e accesso alle chart. Per maggiori dettagli, consulta \url{https://chartmuseum.com}.
+
+\textbf{Registro Docker}: un server registry di terze parti, responsabile della memorizzazione delle immagini Docker e dell'elaborazione dei comandi push/pull di Docker. Poiché Harbor deve applicare il controllo degli accessi alle immagini, il Registry indirizzerà i client a un servizio token per ottenere un token valido per ogni richiesta di pull o push.
+
+\textbf{Notary}: un server di fiducia del contenuto di terze parti, responsabile della pubblicazione e verifica sicura dei contenuti. Per maggiori dettagli, consulta \url{https://github.com/theupdateframework/notary}.
+
+\subsection{Consumatori}
+Come registro standard di artefatti cloud-native, i client correlati saranno naturalmente supportati, come Docker CLI, client Notary, client compatibile OCI come Oras e Helm. Oltre a questi client, Harbor fornisce anche un portale web per consentire agli amministratori di gestire e monitorare facilmente tutti gli artefatti.
+
+\subsection{Il processo di \texttt{docker login}}
+Un utente esegue il comando docker per inviare una richiesta di login a Harbor:
+\begin{verbatim}
+$ docker login https://harbor.domain
+\end{verbatim}
+
+Dopo che l'utente inserisce le credenziali richieste, il client Docker invia una richiesta HTTP GET all'indirizzo "https://harbor.domain/v2/". I diversi container di Harbor la processano secondo i seguenti passaggi:
+\begin{enumerate}
+    \item La richiesta viene ricevuta dal container proxy in ascolto sulla porta 80. Nginx nel container inoltra la richiesta al Registry container sul backend;
+    \item Il Registry container è stato configurato per l'autenticazione basata su token, quindi restituisce un codice di errore 401, notificando al client Docker di ottenere un token valido da un URL specificato. In Harbor, questo URL punta al servizio token dei Servizi Core;
+    \item Quando il client Docker riceve questo codice di errore, invia una richiesta all'URL del servizio token, incorporando nome utente e password nell'intestazione della richiesta secondo l'autenticazione di base delle specifiche HTTP;
+    \item Dopo che questa richiesta è stata inviata al container proxy tramite la porta 80, Nginx inoltra nuovamente la richiesta al container UI secondo le regole preconfigurate. Il servizio token all'interno del container UI riceve la richiesta, la decodifica e ottiene il nome utente e la password;
+    \item Dopo aver ottenuto il nome utente e la password, il servizio token controlla il database e autentica l'utente in base ai dati nel database PostgreSQL. Quando il servizio token è configurato per l'autenticazione LDAP/AD, come nel nostro caso, autentica contro il server LDAP/AD esterno. Dopo l'autenticazione riuscita, il servizio token restituisce un codice HTTP che indica il successo. Il corpo della risposta HTTP contiene un token generato da una chiave privata.
+\end{enumerate}
+A questo punto, un processo di login di docker è stato completato.
+
+\subsection{Il processo di \texttt{docker push}}
+
+Dopo che l'utente ha effettuato con successo l'accesso, un'immagine Docker viene inviata a Harbor tramite il comando:
+\begin{verbatim}
+# docker push https://harbor.domain/library/hello-world
+\end{verbatim}
+
+\begin{enumerate}
+    \item In primo luogo, il client docker ripete il processo simile al login inviando la richiesta al registro, e quindi riceve l'URL del servizio token;
+    \item Successivamente, quando si contatta il servizio token, il client Docker fornisce informazioni aggiuntive per richiedere un token per l'operazione di push sull'immagine (library/hello-world);
+    \item Dopo aver ricevuto la richiesta inoltrata da Nginx, il servizio token interroga il database per verificare il ruolo dell'utente e i permessi per il push dell'immagine. Se l'utente ha il permesso adeguato, codifica le informazioni dell'operazione di push, le firma con una chiave privata e genera un token per il client Docker;
+    \item Dopo che il client Docker ottiene il token, invia una richiesta di push al registro con un'intestazione contenente il token. Una volta che il Registro riceve la richiesta, decodifica il token con la chiave pubblica e ne valida il contenuto. La chiave pubblica corrisponde alla chiave privata del servizio token. Se il registro trova il token valido per il push dell'immagine, inizia il processo di trasferimento dell'immagine.
+\end{enumerate}
+
+\section{Integrazione con la CA}
 Poiché è richiesto che Harbor utilizzi https, abbiamo prima bisogno di ottenere un certificato da una CA. È stato perciò usato Certbot, uno utility a riga di comando che permette di ottenere certificati SSL/TLS. Certbot per ottenere tale certificato ha bisogno dei seguenti parametri:
 \begin{itemize}
     \item il dominio DNS per cui si richiede il certificato
@@ -157,7 +275,7 @@ Poiché è richiesto che Harbor utilizzi https, abbiamo prima bisogno di ottener
     \item una flag con cui si dichiara di accettare le condizioni del servizio
 \end{itemize}
 Inoltre dato che in questo caso è si fa uso di una CA locale e non certificata da una CA fidata bisogna passare a Certbot una variabile di ambiente che contiene il percorso del file che contiene il \texttt{root.ca}, cioè il certificato della nostra CA e che Certbot deve accettare come certificate authority affidabile.
-\subsection{Integrazione con il server LDAP}
+\section{Integrazione con il server LDAP}
 Per configurare la modalità di autenticazione di Harbor è stata utilizzata la vastissima RESTful API messa a disposizione. 
 Facendo una chiamata PUT all'endpoint \texttt{/api/v2.0/configurations} è possibile configurare Harbor in ogni suo aspetto. La richiesta ha questo aspetto:
 \begin{lstlisting}[language=bash]
@@ -192,6 +310,7 @@ Ecco la spiegazione dei campi più importanti:
 Vagrant ha numerosi plugin, uno di questi è vagrant-dns, che permette la creazione di un server dns che gestisce un dominio locale. Nel Vagrantfile è possibile assegnare un nome di dominio alle macchine virtuali. Questo è fondamentale per il funzionamento di Harbor, infatti Harbor espone tutti i suoi servizi tramite un proxy Nginx il quale per funzionare correttamente deve ricevere richieste con un nome di dominio. Se si fa una GET verso Nginx con un indirizzo ip "nudo", il server risponde con un errore.
 L'aver assegnato un nome di dominio alla macchina che ospita Harbor permetterà inoltre di eseguire una installazione Harbor che farà uso di https.
 
+\chapter{Installazione degli altri componenti}
 \section{Installazione step-ca}
 L'installazione di step-ca è abbastanza lineare, l'unica cosa degna di nota è il far eseguire step-ca come un servizio systemD. La CA durante l'inizializzazione richiede tra i vari campi anche l'indirizzo ip e il nome dns della macchina ospitante. Al termine dell'installazione sarà disponibile il \textit{root certificate}, cioè un certificato "self-signed" dalla stessa CA che la identifica. Il certificato root è solitamente reso affidabile tramite un meccanismo diverso da un certificato, come la distribuzione fisica sicura. Ad esempio, alcuni dei certificati root più conosciuti sono distribuiti nei sistemi operativi dai loro produttori.
 Nel nostro caso questo certificato è reso disponibile alle altre macchine virtuali della nostra architettura tramite un volume condiviso.
