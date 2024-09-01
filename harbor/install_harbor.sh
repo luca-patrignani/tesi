@@ -60,14 +60,76 @@ sed -i "s/reg.mydomain.com/$IPorFQDN/g" harbor.yml
 
 mkdir -p /var/log/harbor
 ./install.sh --with-trivy
-# cp /vagrant/root_ca.crt /home/vagrant/harbor/common/config/shared/trust-certificates
 echo -e "Harbor Installation Complete \n\nPlease log out and log in or run the command 'newgrp docker' to use Docker without sudo\n\nLogin to your harbor instance:\n docker login -u admin -p Harbor12345 $IPorFQDN\n\n:::: ufw firewall was NOT disabled!\n"
 
+cp /vagrant/root_ca.crt /usr/local/share/ca-certificates
+update-ca-certificates --fresh
+
+HARBOR_ADMIN_USERNAME=admin
+HARBOR_ADMIN_PASSWORD=Ciao1ciao
+HARBOR_URL=https://harbor.domain
+
+echo wait for 200 from harbor
 exit_code=0
 while [[ exit_code -ne 200 ]]; do 
-	exit_code=$( curl -X PUT -s -o /vagrant/set_ldap_harbor.out -w "%{http_code}" -u "admin:Harbor12345" -H "Content-Type: application/json" \
-		-ki https://harbor.domain/api/v2.0/configurations \
-		-d '{
+	exit_code=$( curl -X GET -s -o /dev/null -w "%{http_code}" -u $HARBOR_ADMIN_USERNAME:Harbor12345 \
+		--header 'accept: text/plain' \
+		--url https://harbor.domain/api/v2.0/ping \
+		)
+	echo $exit_code
+	sleep 1
+done
+
+echo change default password
+curl --request PUT -u $HARBOR_ADMIN_USERNAME:Harbor12345 \
+    --url $HARBOR_URL/api/v2.0/users/1/password \
+    --header 'content-type: application/json' \
+    --data "{
+        \"old_password\": \"Harbor12345\",
+        \"new_password\": \"$HARBOR_ADMIN_PASSWORD\"
+    }"
+
+echo create docker hub registry
+curl --request POST -u $HARBOR_ADMIN_USERNAME:$HARBOR_ADMIN_PASSWORD \
+               --url $HARBOR_URL/api/v2.0/registries \
+               --header 'content-type: application/json' \
+               --data '{
+                    "credential": {
+                        "access_key":"",
+                        "access_secret":"",
+                        "type":"basic"
+                        },
+                    "description": "",
+                    "insecure": false,
+                    "name": "docker hub",
+                    "type": "docker-hub",
+                    "url": "https://hub.docker.com"
+                }'
+
+echo get docker hub registry id
+apt install jq -y
+REGISTRY_ID=$(curl -X GET -u $HARBOR_ADMIN_USERNAME:$HARBOR_ADMIN_PASSWORD --url "$HARBOR_URL/api/v2.0/registries?page=1&page_size=10" --header 'accept: application/json' | jq -r ".[].id")
+
+echo $REGISTRY_ID
+
+echo create cache project
+curl --request POST -u $HARBOR_ADMIN_USERNAME:$HARBOR_ADMIN_PASSWORD \
+    --url $HARBOR_URL/api/v2.0/projects \
+    --header 'content-type: application/json' \
+    --data '{
+                "project_name": "cache",
+                "metadata": { 
+                    "public": "false"
+                },
+                "storage_limit": -1,
+                "registry_id": '$REGISTRY_ID'
+            }'
+
+echo setup ldap
+curl --request PUT -u $HARBOR_ADMIN_USERNAME:$HARBOR_ADMIN_PASSWORD \
+		--url $HARBOR_URL/api/v2.0/configurations \
+        --header "Content-Type: application/json" \
+		--data '{
 		"auth_mode": "ldap_auth",
 		"ldap_url": "ldap://ldap.domain:3890",
 		"ldap_base_dn": "ou=people,dc=ldap.domain",
@@ -78,6 +140,4 @@ while [[ exit_code -ne 200 ]]; do
 		"ldap_group_search_filter": "(objectClass=groupOfUniqueNames)",
 		"ldap_group_attribute_name": "uid",
 		"ldap_uid": "uid"
-		}' )
-	sleep 2
-done
+		}'
