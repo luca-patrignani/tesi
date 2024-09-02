@@ -29,16 +29,28 @@
 \tableofcontents
 
 \chapter{Introduzione}
-Una organizzazione che fa uso di immagini di container Docker ha bisogno di salvare le immagini che utilizza per i seguenti motivi\cite{ICP}:
+Una organizzazione che fa uso di immagini di container Docker ha bisogno di salvare le immagini che utilizza per i seguenti motivi:
 \begin{itemize}
     \item Salvaguardarsi dalla rimozione di alcune immagini dai registry pubblici utili all'organizzazione
     \item Velocizzare il download delle immagini ed impegnare meno banda di rete
-    \item Non subire ad ogni pull la limitazione di banda che i registry pubblici (come Docker Hub) impongono agli utenti.
+    \item Non subire ad ogni pull la limitazione di banda che i registry pubblici (come Docker Hub) impongono agli utenti\cite{hub-rate-limit}.
 \end{itemize}
 Questo progetto si pone come obiettivo la creazione di un sistema per il caching di immagini docker.
 
 \chapter{Soluzione}
-Per risolvere questo problema si è scelto di usare il registry open source Harbor. Harbor è un registro open source che protegge i contenuti con politiche e controllo degli accessi basati sui ruoli, assicura che le immagini siano scansionate e prive di vulnerabilità, e firma le immagini come affidabili. Harbor permette la creazione di progetti in modalità proxy cache cioè consente di utilizzare Harbor per fare da proxy e memorizzare nella cache le immagini da un registry pubblico o privato, come ad esempio Docker Hub. È possibile utilizzare un proxy cache per scaricare immagini da un registro Harbor o non-Harbor in un ambiente con accesso limitato o assente a Internet.
+Per risolvere questo problema si è scelto di usare il registry open source Harbor.
+\section{Cos'è Harbor}
+Harbor\cite{harbor} è una piattaforma open source per la gestione di immagini container che serve come un registro di immagini Docker e OCI (Open Container Initiative) con funzioni avanzate per la sicurezza, la gestione degli utenti e l'amministrazione dei progetti. È progettato per aiutare le organizzazioni a distribuire, proteggere e gestire immagini container nel proprio ambiente di sviluppo e produzione.
+\section{Funzionalità principali di Harbor}
+\begin{itemize}
+    \item \textbf{Registry}: Funziona come un registry Docker, permettendo agli utenti di archiviare, condividere e gestire immagini Docker.
+    \item \textbf{Sicurezza}: Harbor integra funzionalità di scansione delle vulnerabilità per identificare problemi di sicurezza nelle immagini container.
+    \item \textbf{Gestione dei progetti}: Consente la creazione di progetti privati e pubblici, la gestione degli utenti e la definizione dei permessi di accesso.
+    \item \textbf{Replica delle immagini}: Supporta la replica delle immagini tra diversi registri per garantire la disponibilità e la resilienza.
+    \item \textbf{Integrazione con Active Directory e LDAP}: Facilita la gestione degli utenti attraverso l'integrazione con servizi di directory aziendali.
+    \item \textbf{Audit e Tracciamento}: Fornisce funzionalità di auditing per monitorare le attività e garantire la conformità.
+\end{itemize}
+Harbor permette la creazione di progetti in modalità proxy cache cioè consente di utilizzare Harbor per fare da proxy e memorizzare nella cache le immagini da un registry pubblico o privato, come ad esempio Docker Hub. È possibile utilizzare un proxy cache per scaricare immagini da un registro Harbor o non-Harbor in un ambiente con accesso limitato o assente a Internet.
 \section{Come funziona Harbor in modalità cache}
 Quando arriva una richiesta di pull a un progetto di proxy cache, se l'immagine non è memorizzata nella cache Harbor recupera l'immagine dal registro di destinazione e soddisfa il comando di pull come se fosse un'immagine locale del progetto di proxy cache. Il progetto di proxy cache quindi memorizza l'immagine nella cache per future richieste.
 
@@ -47,18 +59,18 @@ La prossima volta che un utente richiede quella immagine, Harbor controlla il ma
     \item Se l'immagine non è stata aggiornata nel registro di destinazione, l'immagine memorizzata nella cache viene servita dal progetto di proxy cache.
     \item Se l'immagine è stata aggiornata nel registro di destinazione, la nuova immagine viene recuperata dal registro di destinazione, quindi servita e memorizzata nella cache nel progetto di proxy cache.
     \item Se il registro di destinazione non è raggiungibile, il progetto di proxy cache serve l'immagine memorizzata nella cache.
-    \item Se l'immagine non è più presente nel registro di destinazione, nessuna immagine viene servita. 
+    \item Se l'immagine non è più presente nel registro di destinazione, nessuna immagine viene servita. \cite{harbor-pull-through-cache}
 \end{itemize}
 
 \chapter{Sicurezza}
 \section{Creare un certificato SSL/TLS firmato da una CA}
 Harbor, se installato correttamente, accetta richieste https. Ha bisogno però di un certificato digitale emesso da una Certificate Authority. In questo caso si è scelto di utilizzare il protocollo ACME. 
 \subsection{Protocollo ACME}
-Il protocollo ACME (Automatic Certificate Management Environment) è uno standard sviluppato per automatizzare l'emissione e la gestione dei certificati digitali, in particolare i certificati SSL/TLS, che sono utilizzati per la crittografia delle comunicazioni su Internet.
+Il protocollo ACME (Automatic Certificate Management Environment)\cite{acme} è uno standard sviluppato per automatizzare l'emissione e la gestione dei certificati digitali, in particolare i certificati SSL/TLS, che sono utilizzati per la crittografia delle comunicazioni su Internet.
 Questo è il suo funzionamento di base:
 \begin{itemize}
     \item Registrazione: Il client si registra con il server CA, creando un account e ottenendo una coppia di chiavi pubblica/privata.
-    \item Richiesta di una sfida: Il client richiede una sfida (challenge) per dimostrare il controllo del dominio. Il protocollo contempla 4 tipi di sfide:
+    \item Richiesta di una sfida: Il client richiede una sfida (challenge) per dimostrare il controllo del dominio. Il protocollo contempla 4 tipi di sfide\cite{acme-challenges}:
     \begin{itemize}
         \item HTTP-01 challenge: La CA ACME richiede al client di ospitare un numero casuale in un URL casuale in \texttt{/.well-known/acme-challenge} sulla porta 80. La CA verifica il controllo del client sul quel dominio e su quella porta riservata emettendo una richiesta HTTP GET a quell'URL.
         \item DNS-01 challenge: La CA ACME richiede al client di configurare un record DNS TXT casuale per il dominio in questione. La verifica della sfida avviene tramite una query DNS per quel record TXT.
