@@ -75,7 +75,7 @@ La prossima volta che un utente richiede quella immagine, Harbor controlla il ma
 
 \chapter{Sicurezza}
 \section{Creare un certificato SSL/TLS firmato da una CA}
-Harbor, se installato correttamente, accetta richieste https. Ha bisogno però di un certificato digitale emesso da una Certificate Authority tramite il protocollo ACME. 
+Harbor, se installato correttamente, accetta richieste https. Ha bisogno però di un certificato digitale emesso da una Certificate Authority. In questo caso si è scelto di utilizzare il protocollo ACME. 
 \subsection{Protocollo ACME}
 Il protocollo ACME (Automatic Certificate Management Environment) è uno standard sviluppato per automatizzare l'emissione e la gestione dei certificati digitali, in particolare i certificati SSL/TLS, che sono utilizzati per la crittografia delle comunicazioni su Internet.
 Questo è il suo funzionamento di base:
@@ -85,7 +85,7 @@ Questo è il suo funzionamento di base:
     \begin{itemize}
         \item HTTP-01 challenge: La CA ACME richiede al client di ospitare un numero casuale in un URL casuale in \texttt{/.well-known/acme-challenge} sulla porta 80. La CA verifica il controllo del client sul quel dominio e su quella porta riservata emettendo una richiesta HTTP GET a quell'URL.
         \item DNS-01 challenge: La CA ACME richiede al client di configurare un record DNS TXT casuale per il dominio in questione. La verifica della sfida avviene tramite una query DNS per quel record TXT.
-        \item TLS-ALPN-01 challenge: La CA ACME utilizza TLS per validare una sfida, sfruttando la negoziazione del protocollo a livello di applicazione (ALPN) nella stretta di mano TLS. Il client presenta un certificato TLS auto-firmato che contiene la risposta alla sfida come un'estensione speciale del certificato X.509.
+        \item TLS-ALPN-01 challenge: La CA ACME utilizza TLS per validare una sfida, sfruttando la negoziazione del protocollo a livello di applicazione (ALPN) durante la TLS handshake. Il client presenta un certificato TLS auto-firmato che contiene la risposta alla sfida come un'estensione speciale del certificato X.509.
         \item DEVICE-ATTEST-01 challenge: progettata per emettere certificati client legati a un identificatore del dispositivo. Permette ai client con un modulo di sicurezza integrato (TPM, Secure Enclave, Yubikey, ecc.) di richiedere un certificato legato all'identificatore hardware permanente del modulo di sicurezza. Può anche essere utilizzata per attestare la protezione hardware di una chiave privata nel modulo di sicurezza.
     \end{itemize}
     \item Risposta alla sfida.
@@ -93,11 +93,10 @@ Questo è il suo funzionamento di base:
     \item Emissione del certificato: Se la verifica ha esito positivo, la CA emette il certificato, che il client può scaricare e installare.
     \item Rinnovo: ACME automatizza anche il processo di rinnovo del certificato, eseguendo nuovamente le sfide di controllo del dominio prima della scadenza del certificato.
 \end{itemize}
-Non possiamo però superare nessuna di queste sfide: 
+Non possiamo però superare nessuna delle sfide: 
 \begin{itemize}
     \item HTTP-01: poiché la nostra rete a cui siamo collegati è dietro NAT non abbiamo il controllo sulla porta 80.
     \item DNS-01: non possediamo ne un ip pubblico ne un dominio pubblico per creare un record DNS.
-    \item gli altri due tipi di sfide non sono utili nel nostro caso.
 \end{itemize}
 Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica.
 Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi. Una implementazione open source di una CA è step-ca, sviluppata da Smallstep.
@@ -328,5 +327,36 @@ La sua installazione è molto semplice perché esiste l'immagine Docker ufficial
 Esiste inoltre un progetto esterno che permette il deployment di LLDAP su un cluster Kubernetes. 
 
 \chapter{Conclusioni}
-Ho creato una infrastruttura composta da due macchine virtuali all'interno dello stesso dominio DNS, una all'indirizzo \texttt{harbor.domain} e un'altra \texttt{ca.domain}. La prima ospita una installazione di Harbor su Docker Compose, mentre l'altra contiene una installazione di step-ca, una implementazione minimale di una certificate authority. 
+\section{Architettura completa}
+
+\section{Benchmark}
+Per mostrare il miglioramento delle prestazioni nella fase di download delle immagini usando la cache che questo progetto di tesi ha creato si è proceduto a scrivere uno script di testing. Lo script prende come argomento il nome di una immagine Docker \texttt{image} presente sul registro pubblico di Docker Hub e restituisce queste misurazioni:
+\begin{enumerate}
+    \item La dimensione dell'immagine \texttt{image}, colonna Dimensione;
+    \item Il tempo in secondi impiegato dal daemon Docker per scaricare una certa immagine \texttt{image} direttamente da Docker Hub, colonna No cache;
+    \item Il tempo in secondi impiegato dal daemon Docker per scaricare una certa immagine \texttt{image} da un progetto di Harbor in modalità cache della stessa immagine \textit{non presente} nel progetto, colonna Cache miss;
+    \item Il tempo in secondi impiegato dal daemon Docker per scaricare una certa immagine \texttt{image} da un progetto di Harbor in modalità cache della stessa immagine \textit{già presente} nel progetto, colonna Cache hit.
+\end{enumerate}
+Ecco delle misurazioni effettuate su alcune immagini di esempio, tutte le misurazioni sono state svolte su una installazione locale di Harbor \ref{table:benchmark}.
+\begin{table}[]
+    \begin{tabular}{|c|c|c|c|c|}
+    \hline
+                         & \textbf{Dimensione} & \textbf{No cache} & \textbf{Cache miss} & \textbf{Cache hit} \\ \hline
+    \textbf{hello-world} & 13,3 kB             & 3,14 s            & 5,35 s              & 0,65 s             \\ \hline
+    \textbf{alpine}      & 7.8 MB              & 7,13 s            & 7,08 s              & 1,66 s             \\ \hline
+    \textbf{ubuntu}      & 78,1 MB             & 18,78 s           & 26,74 s             & 2,71 s             \\ \hline
+    \textbf{fedora}      & 222 MB              & 56,38 s           & 105,31 s            & 4,35 s             \\ \hline
+    \textbf{postgres}    & 432 MB              & 92,87 s           & 110,03 s            & 8,82 s             \\ \hline
+    \textbf{mysql}       & 586 MB              & 98,77 s           & 191,78 s            & 7,74 s             \\ \hline
+    \end{tabular}
+    \caption{Tabella che mostra i risultati di alcune misurazioni fatte su un campione di immagini Docker.}
+    \label{table:benchmark}
+\end{table}
+Prima di analizzare questi dati bisogna ricordare che
+\begin{itemize}
+    \item Le misurazioni variano dalla posizione geografica dell'installazione di Harbor (in questo caso locale)
+    \item Le misurazioni variano dalla posizione geografica del server che ci offre le immagini docker (in questo caso Docker Hub)
+    \item Le misurazioni variano al variare della banda disponibile durante il download.
+\end{itemize}
+Detto ciò si può notare come tutti i tempi misurati aumentano all'aumentare della dimensione dell'immagine scaricata, inoltre si nota come i tempi aumentano leggermente quando si ha un cache miss e si riducono notevolmente quando si ha un cache hit.
 \end{document}.
