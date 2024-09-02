@@ -1,58 +1,35 @@
-\documentclass[12pt,a4paper]{report}
-\usepackage[italian]{babel}
-\usepackage{newlfont}
-\usepackage{listings}
-\lstset{basicstyle=\ttfamily,
-showstringspaces=false,
-breaklines=true,
-}
-\usepackage{graphicx}
+\documentclass[12pt]{report}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{makeidx}
+\usepackage{graphicx} % Required for inserting images
 \usepackage{hyperref}
+\usepackage[left=2cm, right=2cm]{geometry}
+\usepackage[sorting=none]{biblatex}
+\usepackage{csquotes}
+\usepackage[italian]{babel}
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily,
+    showstringspaces=false,
+    breaklines=true,
+}
 
-\textwidth=450pt\oddsidemargin=0pt
+\linespread{1}
+\addbibresource{pages/bibliography.bib}
+
+\makeindex
 \begin{document}
-\begin{titlepage}
-\begin{center}
-{{\Large{\textsc{Alma Mater Studiorum $\cdot$ Universit\`a di
-Bologna}}}} \rule[0.1cm]{15.8cm}{0.1mm}
-\rule[0.5cm]{15.8cm}{0.6mm}
-{\small{\bf SCUOLA DI SCIENZE\\
-Corso di Laurea in Ingegneria e Scienze Informatiche }}
-\end{center}
-\vspace{15mm}
-\begin{center}
-{\LARGE{\bf PROGETTO}}\\
-\vspace{3mm}
-{\LARGE{\bf VIRTUALIZZAZIONE}}\\
-\vspace{3mm}
-{\LARGE{\bf DI}}\\
-\vspace{3mm}
-{\LARGE{\bf SISTEMI}}\\
-\end{center}
-\vspace{40mm}
-\par
-\noindent
-\begin{minipage}[t]{0.47\textwidth}
-{\large{\bf Relatore:\\
-Chiar.mo Prof.\\
-Vittorio Ghini}}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.47\textwidth}\raggedleft
-{\large{\bf Presentata da:\\
-Luca Patrignani}}
-\end{minipage}
-\vspace{20mm}
-\begin{center}
-{\large{\bf Sessione\\%inserire il numero della sessione in cui ci si laurea
-2024-2025}}%inserire l'anno accademico a cui si è iscritti
-\end{center}
-\end{titlepage}
+\title{}
+\date{}
 
+\include{pages/titlepage}
+
+\maketitle
 \tableofcontents
 
 \chapter{Introduzione}
-Una organizzazione che fa uso di immagini di container Docker ha bisogno di salvare le immagini che utilizza per i seguenti motivi:
+Una organizzazione che fa uso di immagini di container Docker ha bisogno di salvare le immagini che utilizza per i seguenti motivi\cite{ICP}:
 \begin{itemize}
     \item Salvaguardarsi dalla rimozione di alcune immagini dai registry pubblici utili all'organizzazione
     \item Velocizzare il download delle immagini ed impegnare meno banda di rete
@@ -372,4 +349,6 @@ Prima di analizzare questi dati bisogna ricordare che
     \item Le misurazioni variano al variare della banda disponibile durante il download.
 \end{itemize}
 Detto ciò si può notare come tutti i tempi misurati aumentano all'aumentare della dimensione dell'immagine scaricata, inoltre si nota come i tempi aumentano leggermente quando si ha un cache miss e si riducono notevolmente quando si ha un cache hit.
+
+\printbibliography[heading=bibintoc, title={Bibliografia}]
 \end{document}.
