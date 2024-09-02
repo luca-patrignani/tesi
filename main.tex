@@ -328,7 +328,20 @@ Esiste inoltre un progetto esterno che permette il deployment di LLDAP su un clu
 
 \chapter{Conclusioni}
 \section{Architettura completa}
-
+L'architettura ottenuta è schematizzata in questo modo \ref{image:gen-arch}:
+\begin{itemize}
+    \item Il daemon di Docker (autenticato se necessario) può ottenere da Harbor le immagini presenti nel registry remoto Docker Hub (o altri registri),
+    \item Minikube può ottenere le immagini necessarie al funzionamento di Kubernetes da Harbor, il quale fa "mirroring" del registry remoto \texttt{registry.k8s.io}, così come le varie immagini che andranno in esecuzione sul cluster.
+    \item Harbor gestisce i propri utenti interfacciandosi con un server che implementa il protocollo LDAP.
+    \item Tramite un web browser è possibile accedere al portale di Harbor e anche ad una dashboard di LLDAP.
+    \item \texttt{ca.domain} emette certificati per permettere l'uso di https. Tutti gli elementi all'interno della rete locale la riconoscono come Certificate Authority fidata.
+\end{itemize}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/arch-gen.png}
+    \caption{Architettura completa del caso studio}
+    \label{image:gen-arch}
+\end{figure}
 \section{Benchmark}
 Per mostrare il miglioramento delle prestazioni nella fase di download delle immagini usando la cache che questo progetto di tesi ha creato si è proceduto a scrivere uno script di testing. Lo script prende come argomento il nome di una immagine Docker \texttt{image} presente sul registro pubblico di Docker Hub e restituisce queste misurazioni:
 \begin{enumerate}
