@@ -51,6 +51,47 @@ Harbor\cite{harbor} è una piattaforma open source per la gestione di immagini c
     \item \textbf{Audit e Tracciamento}: Fornisce funzionalità di auditing per monitorare le attività e garantire la conformità.
 \end{itemize}
 Harbor permette la creazione di progetti in modalità proxy cache cioè consente di utilizzare Harbor per fare da proxy e memorizzare nella cache le immagini da un registry pubblico o privato, come ad esempio Docker Hub. È possibile utilizzare un proxy cache per scaricare immagini da un registro Harbor o non-Harbor in un ambiente con accesso limitato o assente a Internet.
+\section{Alternative a Harbor}
+Due alternative a Harbor sono Nexus di Sonatype e Distribution di Docker.
+\subsection{Sonatype Nexus}
+Sonatype Nexus è un gestore di repository universale che può ospitare diversi tipi di artefatti, non solo immagini container. È comunemente utilizzato in ambienti aziendali dove è necessario gestire una varietà di artefatti software (ad esempio, librerie Java, pacchetti npm, immagini Docker).
+\subsubsection{Caratteristiche principali}
+\begin{itemize}
+  \item \textbf{Supporto Multi-Formato:} Gestisce diversi tipi di artefatti, incluse immagini Docker, Maven, npm, PyPI, NuGet e altri.
+  \item \textbf{Sicurezza e Conformità:} Si integra con Nexus IQ per scansione avanzata delle vulnerabilità, gestione delle licenze e controlli di conformità.
+  \item \textbf{Capacità di Registro Docker:} Fornisce un repository Docker per l'hosting e la gestione delle immagini container con funzionalità come controllo degli accessi basato su ruoli e caching.
+  \item \textbf{Proxy e Caching dei Repository:} Può fare da proxy a repository esterni e memorizzare localmente gli artefatti in cache per migliorare le prestazioni.
+  \item \textbf{Integrazione con CI/CD:} Si integra facilmente con le pipeline CI/CD, permettendo processi di build e deployment fluidi.
+  \item \textbf{Funzionalità Enterprise:} Offre alta disponibilità, mirroring dei repository e supporto avanzato, rendendolo adatto per grandi organizzazioni.\cite{nexus}
+\end{itemize}
+\subsubsection{Casi d'uso}
+\begin{itemize}
+  \item Organizzazioni che necessitano di un unico strumento di gestione dei repository per diversi tipi di artefatti, non solo immagini Docker.
+  \item Aziende alla ricerca di funzionalità avanzate di sicurezza, conformità e gestione degli artefatti.
+  \item Team che necessitano di una soluzione robusta e tutto-in-uno che includa capacità di registro Docker accanto ad altri repository.
+\end{itemize}
+
+Si è scelto Harbor perché è open source e ci permette di creare diversi progetti nella stessa installazione.
+
+\subsection{Docker Distribution (Docker Registry)}
+Docker Distribution comunemente noto come Docker Registry, è lo strumento open source che fornisce le funzionalità di archiviazione e distribuzione per le immagini Docker. È il componente centrale dietro Docker Hub e altri registri Docker. \cite{distribution}
+
+\subsubsection{Caratteristiche principali:}
+\begin{itemize}
+  \item \textbf{Registro Docker Core:} Fornisce le capacità di base necessarie per archiviare e distribuire immagini Docker.
+  \item \textbf{Semplicità e Leggerezza:} Si concentra sull'essere semplice e leggero, adatto per esigenze di hosting e distribuzione di immagini di base.
+  \item \textbf{Open Source:} La base per la maggior parte dei registri container, disponibile gratuitamente con licenza open source.
+  \item \textbf{Scalabile:} Supporta deployment su larga scala con funzionalità di base, come il supporto per backend di archiviazione (S3, Azure, Google Cloud, ecc.).
+  \item \textbf{Caching dei Layer delle Immagini:} Archivia efficientemente le immagini Docker memorizzando in cache i layer, riducendo l'uso di spazio e larghezza di banda.
+\end{itemize}
+
+\subsubsection{Casi d'uso}
+\begin{itemize}
+  \item Team che necessitano di un registro di immagini Docker semplice e leggero.
+  \item Organizzazioni che desiderano costruire registri personalizzati o integrare l'archiviazione delle immagini Docker con altri sistemi.
+  \item Casi d'uso di base in cui non sono richieste funzionalità avanzate come la scansione di sicurezza, la fiducia del contenuto e il supporto multi-tenant.
+\end{itemize}
+
 \section{Come funziona Harbor in modalità cache}
 Quando arriva una richiesta di pull a un progetto di proxy cache, se l'immagine non è memorizzata nella cache Harbor recupera l'immagine dal registro di destinazione e soddisfa il comando di pull come se fosse un'immagine locale del progetto di proxy cache. Il progetto di proxy cache quindi memorizza l'immagine nella cache per future richieste.
 
@@ -89,19 +130,55 @@ Non possiamo però superare nessuna delle sfide:
 \end{itemize}
 Però nel nostro caso non è possibile creare un certificato firmato da una certificate authority pubblica.
 Ci si può accontentare di un certificato "self signed" oppure è possibile create una certificate authority all'interno della propria rete privata ed imporre al browser di accettare quei certificati. Nel nostro caso particolare, dove idealmente Harbor è installato "on premise", questa seconda opzione è da preferirsi. Una implementazione open source di una CA è step-ca, sviluppata da Smallstep.
+\section{Step-ce e alternative}
+In questa sezione, confronteremo tre strumenti comuni per la gestione dei certificati: \textit{step-ca}, \textit{CFSSL} e \textit{Vault} di HashiCorp. Ognuno di questi strumenti ha caratteristiche, casi d'uso e obiettivi differenti.
+
+\subsection{step-ca}
+\textit{step-ca} è parte del toolkit di Smallstep, un'autorità di certificazione (CA) open source progettata per semplificare il processo di gestione dei certificati TLS. È pensato per essere facile da usare, soprattutto per i team DevOps che cercano di automatizzare l'emissione, il rinnovo e la gestione dei certificati.
+
+\subsubsection{Caratteristiche principali}:
+\begin{itemize}
+    \item Semplice da installare e configurare.
+    \item Supporta il protocollo ACME (utilizzato da Let's Encrypt).
+    \item Ideale per esigenze PKI interne (ad esempio, per emettere certificati per servizi interni, infrastrutture, cluster Kubernetes).
+    \item Strumenti moderni e API RESTful.
+\end{itemize}
+
+\subsection{CFSSL}
+\textit{CFSSL} (CloudFlare's PKI/TLS toolkit) è un altro strumento open source per la gestione di certificati e infrastrutture PKI. È stato sviluppato da Cloudflare e offre una serie di strumenti per la gestione dei certificati, la creazione di una CA, e la gestione di chiavi private.
+
+\subsubsection{Caratteristiche principali}:
+\begin{itemize}
+    \item Fornisce strumenti per la generazione e la firma di certificati.
+    \item Include un servizio di CA API-based che può essere integrato in vari sistemi.
+    \item Supporta politiche avanzate di gestione dei certificati.
+    \item Adatto per ambienti dove è richiesta una gestione dettagliata e personalizzabile dei certificati.
+\end{itemize}
+
+\subsection{Vault di HashiCorp}
+\textit{Vault} di HashiCorp è uno strumento di gestione dei segreti che offre anche funzionalità di gestione dei certificati. Vault è progettato principalmente per la gestione sicura di segreti (come API keys, password, certificati, ecc.), ma può fungere anche da CA.
+
+\subsubsection{Caratteristiche principali}:
+\begin{itemize}
+    \item Gestione centralizzata dei segreti, incluse chiavi API, password e certificati.
+    \item Capacità di operare come CA per emettere e rinnovare certificati.
+    \item Integrazione con molti sistemi di autenticazione (LDAP, AWS IAM, Kubernetes, ecc.).
+    \item Adatto per ambienti complessi che richiedono una gestione avanzata dei segreti e dei certificati.
+\end{itemize}
+Si è scelto step-ca di Smallstep principalmente per la sua facilità d'uso e il supporto ad ACME.
 
 \chapter{Autenticazione degli utenti}
 Harbor permette di integrare servizi di identity provider e usare quegli utenti e gruppi all'interno dei propri progetti. Quindi i dipendenti potranno usare le proprie credenziali aziendali per accedere alla dashboard di Harbor e fare login tramite il comando \texttt{docker login} alle repository a cui hanno il diritto di accedere. Harbor supporta quattro modalità di autenticazione:
 \begin{itemize}
     \item Autenticazione tramite database: gli account utente sono creati e gestiti direttamente in Harbor. Gli account utente sono archiviati nel database di Harbor.
     \item Autenticazione tramite LDAP/Active Directory: Harbor è connesso a un server LDAP/Active Directory esterno. Gli account utente vengono creati e gestiti dal provider LDAP/AD.
-    \item Autenticazione tramite Provider OIDC: Harbor è connesso a un provider OIDC esterno. Gli account utente vengono creati e gestiti dal provider OIDC.
+    \item Autenticazione tramite Provider OIDC: Harbor è connesso a un provider OIDC esterno. Gli account utente vengono creati e gestiti dal provider OIDC.\cite{harbor-auth}
 \end{itemize}
 Questo livello di sicurezza può risultare ridondante se Harbor è installato all'interno di una rete privata dove l'accesso alla rete stessa dovrebbe garantire un adeguato livello di sicurezza ma di garantire o revocare certi diritti a certi utenti. Per quanto riguarda invece una installazione accessibile da internet (cioè raggiungibile anche da fuori della rete aziendale senza passare per una VPN o altri sistemi di tunnelling) allora diventa di vitale importanza questo livello di autenticazione.
 Dato che il caso studio riguarda una azienda è molto probabile che questa abbia già un proprio servizio di active directory che supporti nativamente LDAP, perciò si è deciso di utilizzare questo protocollo.
 
 \section{LDAP}
-LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-source e multipiattaforma utilizzato per accedere e gestire directory di informazioni. Una directory in questo contesto è un archivio che contiene dati strutturati gerarchicamente, come una rubrica di contatti o informazioni su utenti, computer e altre risorse di rete.
+LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-source e multipiattaforma utilizzato per accedere e gestire directory di informazioni. Una directory in questo contesto è un archivio che contiene dati strutturati gerarchicamente, come una rubrica di contatti o informazioni su utenti, computer e altre risorse di rete.\cite{ldap}
 \section{Caratteristiche principali di LDAP}
 \begin{itemize}
     \item \textbf{Gestione centralizzata}: LDAP viene utilizzato principalmente per la gestione centralizzata degli utenti e delle risorse. Questo significa che tutte le informazioni sugli utenti (come nomi utente, password, indirizzi email) e le risorse di rete (come stampanti, server) possono essere gestite da un unico punto.
@@ -121,7 +198,7 @@ Il DN è formato da una serie di attributi, ciascuno con un valore, che rapprese
     \item \textbf{DC (Domain Component)}: Componente di dominio.
     \item \textbf{L (Locality)}: Località.
     \item \textbf{ST (State or Province)}: Stato o provincia.
-    \item \textbf{C (Country)}: Paese.
+    \item \textbf{C (Country)}: Paese.\cite{distinguished-name}
 \end{itemize}
 \subsection{Esempi di DN}
 \begin{itemize}
@@ -251,7 +328,7 @@ Dopo che l'utente ha effettuato con successo l'accesso, un'immagine Docker viene
     \item In primo luogo, il client docker ripete il processo simile al login inviando la richiesta al registro, e quindi riceve l'URL del servizio token;
     \item Successivamente, quando si contatta il servizio token, il client Docker fornisce informazioni aggiuntive per richiedere un token per l'operazione di push sull'immagine (library/hello-world);
     \item Dopo aver ricevuto la richiesta inoltrata da Nginx, il servizio token interroga il database per verificare il ruolo dell'utente e i permessi per il push dell'immagine. Se l'utente ha il permesso adeguato, codifica le informazioni dell'operazione di push, le firma con una chiave privata e genera un token per il client Docker;
-    \item Dopo che il client Docker ottiene il token, invia una richiesta di push al registro con un'intestazione contenente il token. Una volta che il Registro riceve la richiesta, decodifica il token con la chiave pubblica e ne valida il contenuto. La chiave pubblica corrisponde alla chiave privata del servizio token. Se il registro trova il token valido per il push dell'immagine, inizia il processo di trasferimento dell'immagine.
+    \item Dopo che il client Docker ottiene il token, invia una richiesta di push al registro con un'intestazione contenente il token. Una volta che il Registro riceve la richiesta, decodifica il token con la chiave pubblica e ne valida il contenuto. La chiave pubblica corrisponde alla chiave privata del servizio token. Se il registro trova il token valido per il push dell'immagine, inizia il processo di trasferimento dell'immagine.\cite{harbor-arch}
 \end{enumerate}
 
 \section{Integrazione con la CA}
@@ -292,11 +369,23 @@ Ecco la spiegazione dei campi più importanti:
     \item \texttt{ldap\_search\_password}: la password dell'utente bind
     \item \texttt{ldap\_group\_base\_dn}: il gruppo contenente gli utenti che potranno accedere ad Harbor
     \item \texttt{ldap\_group\_admin\_dn}: il gruppo contenente gli utenti che saranno amministratori dell'istanza Harbor
-    \item \texttt{ldap\_uid}: l'attributo che gli utenti dovranno inserire come nome utente quando accederanno ad Harbor
+    \item \texttt{ldap\_uid}: l'attributo che gli utenti dovranno inserire come nome utente quando accederanno ad Harbor. \cite{harbor-auth}
 \end{itemize}
 \section{Domain Name System}
 Vagrant ha numerosi plugin, uno di questi è vagrant-dns, che permette la creazione di un server dns che gestisce un dominio locale. Nel Vagrantfile è possibile assegnare un nome di dominio alle macchine virtuali. Questo è fondamentale per il funzionamento di Harbor, infatti Harbor espone tutti i suoi servizi tramite un proxy Nginx il quale per funzionare correttamente deve ricevere richieste con un nome di dominio. Se si fa una GET verso Nginx con un indirizzo ip "nudo", il server risponde con un errore.
 L'aver assegnato un nome di dominio alla macchina che ospita Harbor permetterà inoltre di eseguire una installazione Harbor che farà uso di https.
+\subsection{Provisioning e vagrant-dns}
+Quando un box di Vagrant viene acceso il plugin vagrant-dns crea un nuovo record DNS per quella macchina con il nome di dominio assegnatogli. Per creare uno nuovo record DNS vagrant-dns ha ovviamente bisogno dell'indirizzo ip a cui corrisponderà il nuovo nome di dominio. Per ottenere questa informazione viene eseguito un piccolo script di bash all'interno del box che restituisce l'indirizzo ip. Qui sorge il problema: non è detto che al momento dell'esecuzione dello script le configurazioni di rete siano già avvenute (infatti non è quasi mai il caso). Perciò il plugin ritarda tutte le operazioni aspettando il termine del provisioning della macchina. Ma lo script di provisioning contiene anche i comandi per ottenere il certificato https e questa operazione ha bisogno che la macchina sia raggiungibile anche utilizzando il suo nome di dominio, il quale potrebbe essere ancora non stato assegnato. La soluzione a questo problema è scomporre il processo di start up in due fasi:
+\begin{enumerate}
+    \item Far partire i box senza eseguire provisioning, obbligando perciò vagrant-dns a ripetere lo script per identificare l'indirizzo ip delle varie macchine
+    \begin{lstlisting}[language=bash]
+        vagrant up --no-provision
+    \end{lstlisting}
+    \item Ora che le macchine hanno il loro nome DNS assegnato, fare provisioning delle macchine
+    \begin{lstlisting}[language=bash]
+        vagrant provision
+    \end{lstlisting}
+\end{enumerate}
 
 \chapter{Installazione degli altri componenti}
 \section{Installazione step-ca}
