@@ -43,12 +43,12 @@ Per risolvere questo problema si è scelto di usare il registry open source Harb
 Harbor\cite{harbor} è una piattaforma open source per la gestione di immagini container che serve come un registro di immagini Docker e OCI (Open Container Initiative) con funzioni avanzate per la sicurezza, la gestione degli utenti e l'amministrazione dei progetti. È progettato per aiutare le organizzazioni a distribuire, proteggere e gestire immagini container nel proprio ambiente di sviluppo e produzione.
 \section{Funzionalità principali di Harbor}
 \begin{itemize}
-    \item \textbf{Registry}: Funziona come un registry Docker, permettendo agli utenti di archiviare, condividere e gestire immagini Docker.
-    \item \textbf{Sicurezza}: Harbor integra funzionalità di scansione delle vulnerabilità per identificare problemi di sicurezza nelle immagini container.
-    \item \textbf{Gestione dei progetti}: Consente la creazione di progetti privati e pubblici, la gestione degli utenti e la definizione dei permessi di accesso.
-    \item \textbf{Replica delle immagini}: Supporta la replica delle immagini tra diversi registri per garantire la disponibilità e la resilienza.
-    \item \textbf{Integrazione con Active Directory e LDAP}: Facilita la gestione degli utenti attraverso l'integrazione con servizi di directory aziendali.
-    \item \textbf{Audit e Tracciamento}: Fornisce funzionalità di auditing per monitorare le attività e garantire la conformità.
+    \item Registry: Funziona come un registry Docker, permettendo agli utenti di archiviare, condividere e gestire immagini Docker.
+    \item Sicurezza: Harbor integra funzionalità di scansione delle vulnerabilità per identificare problemi di sicurezza nelle immagini container.
+    \item Gestione dei progetti: Consente la creazione di progetti privati e pubblici, la gestione degli utenti e la definizione dei permessi di accesso.
+    \item Replica delle immagini: Supporta la replica delle immagini tra diversi registri per garantire la disponibilità e la resilienza.
+    \item Integrazione con Active Directory e LDAP: Facilita la gestione degli utenti attraverso l'integrazione con servizi di directory aziendali.
+    \item Audit e Tracciamento: Fornisce funzionalità di auditing per monitorare le attività e garantire la conformità.
 \end{itemize}
 Harbor permette la creazione di progetti in modalità proxy cache cioè consente di utilizzare Harbor per fare da proxy e memorizzare nella cache le immagini da un registry pubblico o privato, come ad esempio Docker Hub. È possibile utilizzare un proxy cache per scaricare immagini da un registro Harbor o non-Harbor in un ambiente con accesso limitato o assente a Internet.
 \section{Alternative a Harbor}
@@ -57,12 +57,12 @@ Due alternative a Harbor sono Nexus di Sonatype e Distribution di Docker.
 Sonatype Nexus è un gestore di repository universale che può ospitare diversi tipi di artefatti, non solo immagini container. È comunemente utilizzato in ambienti aziendali dove è necessario gestire una varietà di artefatti software (ad esempio, librerie Java, pacchetti npm, immagini Docker).
 \subsubsection{Caratteristiche principali}
 \begin{itemize}
-  \item \textbf{Supporto Multi-Formato:} Gestisce diversi tipi di artefatti, incluse immagini Docker, Maven, npm, PyPI, NuGet e altri.
-  \item \textbf{Sicurezza e Conformità:} Si integra con Nexus IQ per scansione avanzata delle vulnerabilità, gestione delle licenze e controlli di conformità.
-  \item \textbf{Capacità di Registro Docker:} Fornisce un repository Docker per l'hosting e la gestione delle immagini container con funzionalità come controllo degli accessi basato su ruoli e caching.
-  \item \textbf{Proxy e Caching dei Repository:} Può fare da proxy a repository esterni e memorizzare localmente gli artefatti in cache per migliorare le prestazioni.
-  \item \textbf{Integrazione con CI/CD:} Si integra facilmente con le pipeline CI/CD, permettendo processi di build e deployment fluidi.
-  \item \textbf{Funzionalità Enterprise:} Offre alta disponibilità, mirroring dei repository e supporto avanzato, rendendolo adatto per grandi organizzazioni.\cite{nexus}
+  \item Supporto Multi-Formato: Gestisce diversi tipi di artefatti, incluse immagini Docker, Maven, npm, PyPI, NuGet e altri.
+  \item Sicurezza e Conformità: Si integra con Nexus IQ per scansione avanzata delle vulnerabilità, gestione delle licenze e controlli di conformità.
+  \item Capacità di Registro Docker: Fornisce un repository Docker per l'hosting e la gestione delle immagini container con funzionalità come controllo degli accessi basato su ruoli e caching.
+  \item Proxy e Caching dei Repository: Può fare da proxy a repository esterni e memorizzare localmente gli artefatti in cache per migliorare le prestazioni.
+  \item Integrazione con CI/CD: Si integra facilmente con le pipeline CI/CD, permettendo processi di build e deployment fluidi.
+  \item Funzionalità Enterprise: Offre alta disponibilità, mirroring dei repository e supporto avanzato, rendendolo adatto per grandi organizzazioni.\cite{nexus}
 \end{itemize}
 \subsubsection{Casi d'uso}
 \begin{itemize}
@@ -76,13 +76,13 @@ Si è scelto Harbor perché è open source e ci permette di creare diversi proge
 \subsection{Docker Distribution (Docker Registry)}
 Docker Distribution comunemente noto come Docker Registry, è lo strumento open source che fornisce le funzionalità di archiviazione e distribuzione per le immagini Docker. È il componente centrale dietro Docker Hub e altri registri Docker. \cite{distribution}
 
-\subsubsection{Caratteristiche principali:}
+\subsubsection{Caratteristiche principali}
 \begin{itemize}
-  \item \textbf{Registro Docker Core:} Fornisce le capacità di base necessarie per archiviare e distribuire immagini Docker.
-  \item \textbf{Semplicità e Leggerezza:} Si concentra sull'essere semplice e leggero, adatto per esigenze di hosting e distribuzione di immagini di base.
-  \item \textbf{Open Source:} La base per la maggior parte dei registri container, disponibile gratuitamente con licenza open source.
-  \item \textbf{Scalabile:} Supporta deployment su larga scala con funzionalità di base, come il supporto per backend di archiviazione (S3, Azure, Google Cloud, ecc.).
-  \item \textbf{Caching dei Layer delle Immagini:} Archivia efficientemente le immagini Docker memorizzando in cache i layer, riducendo l'uso di spazio e larghezza di banda.
+  \item Registro Docker Core: Fornisce le capacità di base necessarie per archiviare e distribuire immagini Docker.
+  \item Semplicità e Leggerezza: Si concentra sull'essere semplice e leggero, adatto per esigenze di hosting e distribuzione di immagini di base.
+  \item Open Source: La base per la maggior parte dei registri container, disponibile gratuitamente con licenza open source.
+  \item Scalabile: Supporta deployment su larga scala con funzionalità di base, come il supporto per backend di archiviazione (S3, Azure, Google Cloud, ecc.).
+  \item Caching dei Layer delle Immagini: Archivia efficientemente le immagini Docker memorizzando in cache i layer, riducendo l'uso di spazio e larghezza di banda.
 \end{itemize}
 
 \subsubsection{Casi d'uso}
@@ -181,24 +181,24 @@ Dato che il caso studio riguarda una azienda è molto probabile che questa abbia
 LDAP (acronimo di Lightweight Directory Access Protocol) è un protocollo open-source e multipiattaforma utilizzato per accedere e gestire directory di informazioni. Una directory in questo contesto è un archivio che contiene dati strutturati gerarchicamente, come una rubrica di contatti o informazioni su utenti, computer e altre risorse di rete.\cite{ldap}
 \section{Caratteristiche principali di LDAP}
 \begin{itemize}
-    \item \textbf{Gestione centralizzata}: LDAP viene utilizzato principalmente per la gestione centralizzata degli utenti e delle risorse. Questo significa che tutte le informazioni sugli utenti (come nomi utente, password, indirizzi email) e le risorse di rete (come stampanti, server) possono essere gestite da un unico punto.
-    \item \textbf{Autenticazione e autorizzazione}: LDAP è comunemente utilizzato per autenticare utenti e fornire accesso alle risorse in una rete. Ad esempio, molti sistemi operativi, applicazioni e servizi utilizzano LDAP per verificare le credenziali degli utenti.
-    \item \textbf{Interoperabilità}: Essendo un protocollo standard, LDAP è supportato da molti sistemi e applicazioni, rendendolo una scelta popolare per ambienti eterogenei con diverse piattaforme e sistemi operativi.
-    \item \textbf{Leggero}: Come suggerisce il nome, LDAP è progettato per essere "leggero" in termini di risorse di rete e di calcolo richieste, rispetto ai protocolli più vecchi e più complessi.
-    \item \textbf{Distribuzione e replica}: LDAP supporta la distribuzione dei dati e la replica, permettendo di avere copie dei dati della directory in diverse posizioni, migliorando così la disponibilità e la tolleranza ai guasti.
+    \item Gestione centralizzata: LDAP viene utilizzato principalmente per la gestione centralizzata degli utenti e delle risorse. Questo significa che tutte le informazioni sugli utenti (come nomi utente, password, indirizzi email) e le risorse di rete (come stampanti, server) possono essere gestite da un unico punto.
+    \item Autenticazione e autorizzazione: LDAP è comunemente utilizzato per autenticare utenti e fornire accesso alle risorse in una rete. Ad esempio, molti sistemi operativi, applicazioni e servizi utilizzano LDAP per verificare le credenziali degli utenti.
+    \item Interoperabilità: Essendo un protocollo standard, LDAP è supportato da molti sistemi e applicazioni, rendendolo una scelta popolare per ambienti eterogenei con diverse piattaforme e sistemi operativi.
+    \item Leggero: Come suggerisce il nome, LDAP è progettato per essere "leggero" in termini di risorse di rete e di calcolo richieste, rispetto ai protocolli più vecchi e più complessi.
+    \item Distribuzione e replica: LDAP supporta la distribuzione dei dati e la replica, permettendo di avere copie dei dati della directory in diverse posizioni, migliorando così la disponibilità e la tolleranza ai guasti.
 \end{itemize}
 Esiste una versione sicura di LDAP: LDAPS. LDAPS utilizza TLS (Transport Layer Security) o SSL (Secure Sockets Layer) per cifrare la comunicazione tra client e server LDAP, garantendo così che i dati scambiati non possano essere intercettati o modificati da terzi.
 \section{Distinguished Name}
 Un concetto fondamentale nel protocollo LDAP è quello di \textit{Distinguished Name}. Il DN identifica in modo univoco ogni voce in una directory LDAP.
 Il DN è formato da una serie di attributi, ciascuno con un valore, che rappresentano i diversi livelli della struttura della directory. La struttura tipica di un DN può includere (in ordine dal più specifico al più generale):
 \begin{itemize}
-    \item \textbf{CN (Common Name)}: Nome comune dell'oggetto.
-    \item \textbf{OU (Organizational Unit)}: Unità organizzativa.
-    \item \textbf{O (Organization)}: Organizzazione.
-    \item \textbf{DC (Domain Component)}: Componente di dominio.
-    \item \textbf{L (Locality)}: Località.
-    \item \textbf{ST (State or Province)}: Stato o provincia.
-    \item \textbf{C (Country)}: Paese.\cite{distinguished-name}
+    \item CN (Common Name): Nome comune dell'oggetto.
+    \item OU (Organizational Unit): Unità organizzativa.
+    \item O (Organization): Organizzazione.
+    \item DC (Domain Component): Componente di dominio.
+    \item L (Locality): Località.
+    \item ST (State or Province): Stato o provincia.
+    \item C (Country): Paese.\cite{distinguished-name}
 \end{itemize}
 \subsection{Esempi di DN}
 \begin{itemize}
@@ -233,36 +233,36 @@ Come rappresentato nel diagramma sopra, Harbor è composto dai seguenti componen
 
 \subsection{Livello di Accesso ai Dati}
 
-\textbf{k-v storage}: formato da Redis, fornisce funzioni di cache dei dati e supporta la persistenza temporanea dei metadati dei lavori per il servizio di job.
+k-v storage: formato da Redis, fornisce funzioni di cache dei dati e supporta la persistenza temporanea dei metadati dei lavori per il servizio di job.
 
-\textbf{data storage}: diversi tipi di storage sono supportati per la persistenza dei dati come storage di backend del registro e del museo delle chart. Per ulteriori dettagli, fare riferimento al documento della lista dei driver sul sito web di Docker (\url{https://docs.docker.com/registry/storage-drivers/}) e al repository GitHub di ChartMuseum (\url{https://github.com/chartmuseum/storage}).
+data storage: diversi tipi di storage sono supportati per la persistenza dei dati come storage di backend del registro e del museo delle chart. Per ulteriori dettagli, fare riferimento al documento della lista dei driver sul sito web di Docker (\url{https://docs.docker.com/registry/storage-drivers/}) e al repository GitHub di ChartMuseum (\url{https://github.com/chartmuseum/storage}).
 
-\textbf{Database}: memorizza i metadati correlati dei modelli di Harbor, come progetti, utenti, ruoli, politiche di replicazione, politiche di conservazione dei tag, scanner, chart e immagini.
+Database: memorizza i metadati correlati dei modelli di Harbor, come progetti, utenti, ruoli, politiche di replicazione, politiche di conservazione dei tag, scanner, chart e immagini.
 
 \subsection{Servizi principali}
 
-\textbf{Proxy}: reverse-proxy formato dal server Nginx per fornire funzionalità di routing delle API. I componenti di Harbor, come il core, il registro, il portale web e i servizi token, ecc., sono tutti dietro questo proxy inverso. Il proxy inoltra le richieste dai browser e dai client Docker ai vari servizi di backend.
+Proxy: reverse-proxy formato dal server Nginx per fornire funzionalità di routing delle API. I componenti di Harbor, come il core, il registro, il portale web e i servizi token, ecc., sono tutti dietro questo proxy inverso. Il proxy inoltra le richieste dai browser e dai client Docker ai vari servizi di backend.
 
-\textbf{Core}: servizio principale di Harbor, che fornisce principalmente le seguenti funzioni:
+Core: servizio principale di Harbor, che fornisce principalmente le seguenti funzioni:
 
 \begin{itemize}
-  \item \textbf{API Server}: un server HTTP che accetta richieste API REST e risponde a queste richieste basandosi sui suoi sottomoduli come 'Autenticazione e Autorizzazione', 'Middleware' e 'Gestori API'.
+  \item API Server: un server HTTP che accetta richieste API REST e risponde a queste richieste basandosi sui suoi sotto moduli come 'Autenticazione e Autorizzazione', 'Middleware' e 'Gestori API'.
   \begin{itemize}
-    \item \textbf{Autenticazione e Autorizzazione}:
+    \item Autenticazione e Autorizzazione:
     \begin{itemize}
       \item Le richieste sono protette dal servizio di autenticazione, che può essere gestito da un database locale, AD/LDAP o OIDC.
       \item Il meccanismo RBAC è abilitato per eseguire autorizzazioni sulle azioni correlate, ad esempio: pull/push di un'immagine.
       \item Il servizio token è progettato per emettere un token per ogni comando di push/pull di Docker in base al ruolo dell'utente in un progetto. Se non c'è un token in una richiesta inviata da un client Docker, il Registro reindirizzerà la richiesta al servizio token.
     \end{itemize}
-    \item \textbf{Gestori API}: gestiscono le richieste REST API corrispondenti, concentrandosi principalmente sull'analisi e la convalida dei parametri della richiesta, completando la logica aziendale sulla base del controller API pertinente e scrivendo la risposta generata.
+    \item Gestori API: gestiscono le richieste REST API corrispondenti, concentrandosi principalmente sull'analisi e la convalida dei parametri della richiesta, completando la logica aziendale sulla base del controller API pertinente e scrivendo la risposta generata.
   \end{itemize}
-  \item \textbf{Config Manager}: copre la gestione di tutte le configurazioni del sistema, come le impostazioni del tipo di autenticazione, le impostazioni email e i certificati, ecc.
-  \item \textbf{Gestione dei Progetti}: gestisce i dati di base e i metadati corrispondenti del progetto, che è stato creato per isolare gli artefatti gestiti.
-  \item \textbf{Quota Manager}: gestisce le impostazioni delle quote dei progetti ed esegue le convalide delle quote quando avvengono nuovi push.
-  \item \textbf{Chart Controller}: fa da proxy per le richieste relative alle chart al backend `chartmuseum` e fornisce diverse estensioni per migliorare l'esperienza di gestione delle chart.
-  \item \textbf{Retention Manager}: gestisce le politiche di conservazione dei tag, eseguendo e monitorando i processi di conservazione dei tag.
-  \item \textbf{Content Trust}: aggiunge estensioni alla capacità di fiducia fornita dal backend Notary per supportare il processo di fiducia dei contenuti in modo fluido. Al momento, solo le immagini dei container sono supportate per la firma.
-  \item \textbf{Replication Controller}: gestisce le politiche di replicazione e gli adattatori del registro, innesca e monitora i processi di replicazione concorrenti. Molti adattatori del registro sono implementati:
+  \item Config Manager: copre la gestione di tutte le configurazioni del sistema, come le impostazioni del tipo di autenticazione, le impostazioni email e i certificati, ecc.
+  \item Gestione dei Progetti: gestisce i dati di base e i metadati corrispondenti del progetto, che è stato creato per isolare gli artefatti gestiti.
+  \item Quota Manager: gestisce le impostazioni delle quote dei progetti ed esegue le convalide delle quote quando avvengono nuovi push.
+  \item Chart Controller: fa da proxy per le richieste relative alle chart al backend `chartmuseum` e fornisce diverse estensioni per migliorare l'esperienza di gestione delle chart.
+  \item Retention Manager: gestisce le politiche di conservazione dei tag, eseguendo e monitorando i processi di conservazione dei tag.
+  \item Content Trust: aggiunge estensioni alla capacità di fiducia fornita dal backend Notary per supportare il processo di fiducia dei contenuti in modo fluido. Al momento, solo le immagini dei container sono supportate per la firma.
+  \item Replication Controller: gestisce le politiche di replicazione e gli adattatori del registro, innesca e monitora i processi di replicazione concorrenti. Molti adattatori del registro sono implementati:
   \begin{itemize}
     \item Distribution (docker registry)
     \item Docker Hub
@@ -276,27 +276,27 @@ Come rappresentato nel diagramma sopra, Harbor è composto dai seguenti componen
     \item Artifactory
     \item GitLab Registry
   \end{itemize}
-  \item \textbf{Scan Manager}: gestisce i vari scanner configurati adattati da diversi fornitori e fornisce anche sommari di scansione e report per gli artefatti specificati.
-  \item \textbf{Notification Manager (webhook)}: un meccanismo configurato in Harbor in modo che le modifiche di stato degli artefatti in Harbor possano essere popolate agli endpoint Webhook configurati in Harbor. Le parti interessate possono innescare alcune azioni di follow-up ascoltando gli eventi webhook correlati. Attualmente, sono supportati due modi:
+  \item Scan Manager: gestisce i vari scanner configurati adattati da diversi fornitori e fornisce anche sommari di scansione e report per gli artefatti specificati.
+  \item Notification Manager (webhook): un meccanismo configurato in Harbor in modo che le modifiche di stato degli artefatti in Harbor possano essere popolate agli endpoint Webhook configurati in Harbor. Le parti interessate possono innescare alcune azioni di follow-up ascoltando gli eventi webhook correlati. Attualmente, sono supportati due modi:
   \begin{itemize}
     \item Richiesta HTTP Post
     \item Canale Slack
   \end{itemize}
-  \item \textbf{OCI Artifact Manager}: componente core per gestire il ciclo di vita di tutti gli artefatti OCI in tutto il registro Harbor. Fornisce le operazioni CRUD per gestire i metadati e le aggiunte correlate come il report di scansione, la cronologia di costruzione delle immagini del container e il readme, le dipendenze e il valore.yaml delle chart helm, ecc., dell'artefatto, supporta anche le capacità di gestione dei tag degli artefatti e altre operazioni utili.
-  \item \textbf{Registry Driver}: implementato come SDK del client del registro per fare comunicazioni con il registro sottostante (distribuzione Docker al momento). 'OCI Artifact Manager' si basa su questo driver per ottenere informazioni aggiuntive dal manifesto e persino dalla configurazione JSON dell'artefatto specificato che si trova nel registro sottostante.
+  \item OCI Artifact Manager: componente core per gestire il ciclo di vita di tutti gli artefatti OCI in tutto il registro Harbor. Fornisce le operazioni CRUD per gestire i metadati e le aggiunte correlate come il report di scansione, la cronologia di costruzione delle immagini del container e il readme, le dipendenze e il valore.yaml delle chart helm, ecc., dell'artefatto, supporta anche le capacità di gestione dei tag degli artefatti e altre operazioni utili.
+  \item Registry Driver: implementato come SDK del client del registro per fare comunicazioni con il registro sottostante (distribuzione Docker al momento). 'OCI Artifact Manager' si basa su questo driver per ottenere informazioni aggiuntive dal manifesto e persino dalla configurazione JSON dell'artefatto specificato che si trova nel registro sottostante.
 \end{itemize}
 
-\textbf{Servizio di Lavoro}: servizio di coda di esecuzione di lavori generali per permettere ad altri componenti/servizi di inviare richieste per eseguire compiti asincroni in parallelo tramite semplici API REST.
+Servizio di Lavoro: servizio di coda di esecuzione di lavori generali per permettere ad altri componenti/servizi di inviare richieste per eseguire compiti asincroni in parallelo tramite semplici API REST.
 
-\textbf{Collettore di Log}: raccoglitore di log, responsabile della raccolta dei log degli altri moduli in un unico luogo.
+Collettore di Log: raccoglitore di log, responsabile della raccolta dei log degli altri moduli in un unico luogo.
 
-\textbf{Controller di GC}: gestisce le impostazioni del programma GC online e avvia e traccia il progresso del GC.
+Controller di GC: gestisce le impostazioni del programma GC online e avvia e traccia il progresso del GC.
 
-\textbf{Chart Museum}: un server repository di chart di terze parti che fornisce API di gestione e accesso alle chart. Per maggiori dettagli, consulta \url{https://chartmuseum.com}.
+Chart Museum: un server repository di chart di terze parti che fornisce API di gestione e accesso alle chart. Per maggiori dettagli, consulta \url{https://chartmuseum.com}.
 
-\textbf{Registro Docker}: un server registry di terze parti, responsabile della memorizzazione delle immagini Docker e dell'elaborazione dei comandi push/pull di Docker. Poiché Harbor deve applicare il controllo degli accessi alle immagini, il Registry indirizzerà i client a un servizio token per ottenere un token valido per ogni richiesta di pull o push.
+Registro Docker: un server registry di terze parti, responsabile della memorizzazione delle immagini Docker e dell'elaborazione dei comandi push/pull di Docker. Poiché Harbor deve applicare il controllo degli accessi alle immagini, il Registry indirizzerà i client a un servizio token per ottenere un token valido per ogni richiesta di pull o push.
 
-\textbf{Notary}: un server di fiducia del contenuto di terze parti, responsabile della pubblicazione e verifica sicura dei contenuti. Per maggiori dettagli, consulta \url{https://github.com/theupdateframework/notary}.
+Notary: un server di fiducia del contenuto di terze parti, responsabile della pubblicazione e verifica sicura dei contenuti. Per maggiori dettagli, consulta \url{https://github.com/theupdateframework/notary}.
 
 \subsection{Consumatori}
 Come registro standard di artefatti cloud-native, i client correlati saranno naturalmente supportati, come Docker CLI, client Notary, client compatibile OCI come Oras e Helm. Oltre a questi client, Harbor fornisce anche un portale web per consentire agli amministratori di gestire e monitorare facilmente tutti gli artefatti.

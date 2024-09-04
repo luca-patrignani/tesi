@@ -1,10 +1,14 @@
 {
     "cSpell.words": [
+        "ALPN",
         "Certbot",
+        "CFSSL",
         "LDAPS",
         "LLDAP",
         "multipiattaforma",
         "OIDC",
-        "Smallstep"
+        "Smallstep",
+        "Sonatype",
+        "Yubikey"
     ]
 }
