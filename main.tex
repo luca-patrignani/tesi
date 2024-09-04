@@ -35,10 +35,10 @@ Una organizzazione che fa uso di immagini di container Docker ha bisogno di salv
     \item Velocizzare il download delle immagini ed impegnare meno banda di rete
     \item Non subire ad ogni pull la limitazione di banda che i registry pubblici (come Docker Hub) impongono agli utenti\cite{hub-rate-limit}.
 \end{itemize}
+Inoltre l'azienda vuole permettere l'accesso a questo sistema anche a cluster Kubernetes.  
 Questo progetto si pone come obiettivo la creazione di un sistema per il caching di immagini docker.
-
 \chapter{Soluzione}
-Per risolvere questo problema si è scelto di usare il registry open source Harbor.
+Per risolvere questo problema si è scelto di usare il registry open source Harbor, sviluppato da VMware.
 \section{Cos'è Harbor}
 Harbor\cite{harbor} è una piattaforma open source per la gestione di immagini container che serve come un registro di immagini Docker e OCI (Open Container Initiative) con funzioni avanzate per la sicurezza, la gestione degli utenti e l'amministrazione dei progetti. È progettato per aiutare le organizzazioni a distribuire, proteggere e gestire immagini container nel proprio ambiente di sviluppo e produzione.
 \section{Funzionalità principali di Harbor}
@@ -74,7 +74,7 @@ Sonatype Nexus è un gestore di repository universale che può ospitare diversi 
 Si è scelto Harbor perché è open source e ci permette di creare diversi progetti nella stessa installazione.
 
 \subsection{Docker Distribution (Docker Registry)}
-Docker Distribution comunemente noto come Docker Registry, è lo strumento open source che fornisce le funzionalità di archiviazione e distribuzione per le immagini Docker. È il componente centrale dietro Docker Hub e altri registri Docker. \cite{distribution}
+Docker Distribution, comunemente noto come Docker Registry, è lo strumento open source che fornisce le funzionalità di archiviazione e distribuzione per le immagini Docker. È il componente centrale dietro Docker Hub e altri registri Docker. \cite{distribution}
 
 \subsubsection{Caratteristiche principali}
 \begin{itemize}
@@ -134,7 +134,7 @@ Ci si può accontentare di un certificato "self signed" oppure è possibile crea
 In questa sezione, confronteremo tre strumenti comuni per la gestione dei certificati: \textit{step-ca}, \textit{CFSSL} e \textit{Vault} di HashiCorp. Ognuno di questi strumenti ha caratteristiche, casi d'uso e obiettivi differenti.
 
 \subsection{step-ca}
-\textit{step-ca} è parte del toolkit di Smallstep, un'autorità di certificazione (CA) open source progettata per semplificare il processo di gestione dei certificati TLS. È pensato per essere facile da usare, soprattutto per i team DevOps che cercano di automatizzare l'emissione, il rinnovo e la gestione dei certificati.
+Step-ca è parte del toolkit di Smallstep, un'autorità di certificazione (CA) open source progettata per semplificare il processo di gestione dei certificati TLS. È pensato per essere facile da usare, soprattutto per i team DevOps che cercano di automatizzare l'emissione, il rinnovo e la gestione dei certificati.
 
 \subsubsection{Caratteristiche principali}:
 \begin{itemize}
@@ -145,7 +145,7 @@ In questa sezione, confronteremo tre strumenti comuni per la gestione dei certif
 \end{itemize}
 
 \subsection{CFSSL}
-\textit{CFSSL} (CloudFlare's PKI/TLS toolkit) è un altro strumento open source per la gestione di certificati e infrastrutture PKI. È stato sviluppato da Cloudflare e offre una serie di strumenti per la gestione dei certificati, la creazione di una CA, e la gestione di chiavi private.
+CFSSL (CloudFlare's PKI/TLS toolkit) è un altro strumento open source per la gestione di certificati e infrastrutture PKI. È stato sviluppato da Cloudflare e offre una serie di strumenti per la gestione dei certificati, la creazione di una CA, e la gestione di chiavi private.
 
 \subsubsection{Caratteristiche principali}:
 \begin{itemize}
@@ -156,7 +156,7 @@ In questa sezione, confronteremo tre strumenti comuni per la gestione dei certif
 \end{itemize}
 
 \subsection{Vault di HashiCorp}
-\textit{Vault} di HashiCorp è uno strumento di gestione dei segreti che offre anche funzionalità di gestione dei certificati. Vault è progettato principalmente per la gestione sicura di segreti (come API keys, password, certificati, ecc.), ma può fungere anche da CA.
+Vault di HashiCorp è uno strumento di gestione dei segreti che offre anche funzionalità di gestione dei certificati. Vault è progettato principalmente per la gestione sicura di segreti (come API keys, password, certificati, ecc.), ma può fungere anche da CA.
 
 \subsubsection{Caratteristiche principali}:
 \begin{itemize}
@@ -420,6 +420,26 @@ L'architettura ottenuta è schematizzata in questo modo \ref{image:gen-arch}:
     \caption{Architettura completa del caso studio}
     \label{image:gen-arch}
 \end{figure}
+\section{Come installare il progetto e utilizzarlo}
+Prima di tutto bisogna aver installato sulla propria macchina l'hypervisor Virtualbox, vagrant e il plugin vagrant-dns.
+Per scaricare, installare e mettere in esecuzione il progetto si eseguano i seguenti passaggi:
+\begin{lstlisting}[language=bash]
+    git clone https://github.com/luca-patrignani/tesi
+    cd tesi/harbor
+    sudo ./start_all
+\end{lstlisting}
+Al termine di queste operazioni si avranno in esecuzione le tre macchine virtuali. Per verificare che l'installazione abbia avuto successo è possibile visitare
+\begin{itemize}
+    \item la dashboard di Harbor all'indirizzo \url{https://harbor.domain} e accedere con le credenziali admin/Ciao1ciao,
+    \item la dashboard di LLDAP all'indirizzo \url{https://ldap.domain:17170} e accedere con le credenziali admin/password.
+\end{itemize}
+È possibile cambiare la password dell'utente admin di Harbor impostando una variabile all'interno dello script di provisioning \texttt{install\_harbor.sh}.
+Per far utilizzare la cache di Harbor basta sostituire ai nomi delle varie immagini con il nome preceduto da \texttt{harbor.domain/cache}. Questo farà in modo che il il daemon di Docker cerchi le immagini nel progetto di Harbor. Ad esempio per scaricare l'immagine di ubuntu all'ultima versione disponibile su Docker Hub tramite Harbor si esegue questo comando:
+\begin{lstlisting}[language=bash]
+    docker pull harbor.domain/cache/ubuntu:latest
+\end{lstlisting}
+Questo vale anche per Kubernetes: infatti Kubernetes delega il compito di scaricare le immagini al daemon Docker. Se invece non si vuole cambiare tutti i nomi delle immagini dei container esiste un webhook di Kubernetes che esegue proprio questo compito: \href{harbor-container-webhook}{https://github.com/indeedeng/harbor-container-webhook}. Non ho avuto modo di metterlo alla prova perché non è possibile impostare un caBundle personalizzato. 
+
 \section{Benchmark}
 Per mostrare il miglioramento delle prestazioni nella fase di download delle immagini usando la cache che questo progetto di tesi ha creato si è proceduto a scrivere uno script di testing. Lo script prende come argomento il nome di una immagine Docker \texttt{image} presente sul registro pubblico di Docker Hub e restituisce queste misurazioni:
 \begin{enumerate}

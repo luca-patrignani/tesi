@@ -1,5 +1,9 @@
 #!/bin/bash
 
+HARBOR_ADMIN_USERNAME=admin
+HARBOR_ADMIN_PASSWORD=Ciao1ciao
+HARBOR_URL=https://harbor.domain
+
 snap install --classic certbot
 
 systemctl stop docker
@@ -64,10 +68,6 @@ echo -e "Harbor Installation Complete \n\nPlease log out and log in or run the c
 
 cp /vagrant/root_ca.crt /usr/local/share/ca-certificates
 update-ca-certificates --fresh
-
-HARBOR_ADMIN_USERNAME=admin
-HARBOR_ADMIN_PASSWORD=Ciao1ciao
-HARBOR_URL=https://harbor.domain
 
 echo wait for 200 from harbor
 exit_code=0
