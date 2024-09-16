@@ -5,7 +5,7 @@ sudo apt-get update -y
 # Preconfigure the debconf selections to automatically answer the prompt
 echo "apt-cacher-ng apt-cacher-ng/tunnelenable boolean true" | sudo debconf-set-selections
 
-sudo apt-get install -y apt-cacher-ng && sudo echo "PassThroughPattern: .* # this would allow CONNECT to everything" >>  /etc/apt-cacher-ng/acng.conf
+sudo apt-get install -y apt-cacher-ng && sudo echo "PassThroughPattern: .*\nBindAddress: 10.0.0.1 " >>  /etc/apt-cacher-ng/acng.conf
 
 # Install apt-cacher-ng for caching and wireguard for security 
 sudo systemctl enable apt-cacher-ng
